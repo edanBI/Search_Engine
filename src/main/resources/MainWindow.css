@@ -1,0 +1,20 @@
+.root {
+    -fx-background-color: white;
+}
+
+.button {
+    -fx-border-color: black;
+    -fx-background-color: whitesmoke;
+    -fx-text-align: left;
+}
+
+.button:hover {
+    -fx-background-color: lightsteelblue;
+    -fx-color: white;
+}
+
+.text-field:disabled {
+    -fx-border-color: black;
+    -fx-text-inner-color: crimson;
+    -fx-opacity: 1.0;
+}
