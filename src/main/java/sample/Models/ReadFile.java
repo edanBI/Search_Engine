@@ -23,9 +23,9 @@ public class ReadFile {
 
     public ReadFile(String path) {
         this.path = path;
-        this.listOfFilePath = new ArrayList<String>();
-        this.allDocsLanguage = new HashSet<String>();
-        this.allDocsCity = new HashMap<String, City>();
+        this.listOfFilePath = new ArrayList<>();
+        this.allDocsLanguage = new HashSet<>();
+        this.allDocsCity = new HashMap<>();
         filesForFolder(path);
     }
 

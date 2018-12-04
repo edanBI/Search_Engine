@@ -1,7 +1,5 @@
 package sample.Controllers;
 
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -16,8 +14,6 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import org.apache.commons.io.FileUtils;
 import sample.Models.*;
-
-import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
@@ -134,8 +130,7 @@ public class MainWindowController implements Initializable
     @FXML
     public void setToStem()
     {
-        if (chbx_stemming.isSelected()) toStem = true;
-        if (!chbx_stemming.isSelected()) toStem = false;
+        toStem = chbx_stemming.isSelected();
     }
 
     @FXML
@@ -174,22 +169,17 @@ public class MainWindowController implements Initializable
 
             TableView<DictionaryRecord> tbl_dictionary = new TableView<>();
             TableColumn<DictionaryRecord, String> clmn_terms = new TableColumn<>();
-            //TableColumn<DictionaryRecord, Integer> clmn_df = new TableColumn<>();
             TableColumn<DictionaryRecord, Integer> clmn_totalFreq = new TableColumn<>();
             tbl_dictionary.setMinWidth(500.0);
             tbl_dictionary.setMinHeight(702.0);
             clmn_terms.setText("Terms");
             clmn_terms.setMinWidth(300.0);
-            //clmn_df.setText("DF");
-            //clmn_df.setMinWidth(100.0);
             clmn_totalFreq.setText("Total Frequency");
             clmn_totalFreq.setMinWidth(200.0);
 
-            //tbl_dictionary.getColumns().addAll(clmn_terms, clmn_df, clmn_totalFreq);
             tbl_dictionary.getColumns().addAll(clmn_terms, clmn_totalFreq);
 
             clmn_terms.setCellValueFactory(data -> data.getValue().getTermProperty());
-            //clmn_df.setCellValueFactory(data -> data.getValue().getDfProperty());
             clmn_totalFreq.setCellValueFactory(data -> data.getValue().getTotalFreqProperty());
             tbl_dictionary.setItems(details);
 
@@ -209,9 +199,6 @@ public class MainWindowController implements Initializable
     @FXML
     public void loadDictionary()
     {
-        /*FileChooser fc = new FileChooser();
-        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("TXT files (*.txt)", "*.txt"));
-        File f_dictionary = fc.showOpenDialog(vBox_mainWindows.getScene().getWindow());*/
         try {
             String str = txt_postings_path.getText();
             TreeMap<String, DictionaryRecord> loadedDictionary = Indexer.readDictionaryFromFile(str);
@@ -238,24 +225,14 @@ public class MainWindowController implements Initializable
 
     private void displaySummary()
     {
-        /*Stage win = new Stage();
-        win.setTitle("Summary");
-        TextField txt_numDocs = new TextField("#Docs Indexed: " + this.indexer.getNumDocsIndexed());
-        TextField txt_uniqueTerms = new TextField("#Unique Terms: " + this.indexer.getNumUniqueTerms());
-        TextField txt_time = new TextField("Time: " + ((double)(endTime - startTime)/60000) + " min.");
-        //TextField txt_time = new TextField("Time: " + ((double)(endTime - startTime)/1000) + " seconds.");
-
-        VBox vBox = new VBox(txt_numDocs, txt_uniqueTerms, txt_time);
-        Scene scene = new Scene(vBox, 300, 300);
-        win.setScene(scene);
-        win.showAndWait();*/
-
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Indexing Summary");
         alert.setHeaderText(null);
         alert.setContentText("#Docs Indexed: " + this.indexer.getNumDocsIndexed() + '\n' +
                             "#Unique Terms: " + this.indexer.getNumUniqueTerms() + '\n' +
-                            "Time: " + ((double)(endTime - startTime)/60000) + " min.");
+                            "Time(min): " + ((double)(endTime - startTime)/60000) + " min." +
+                            "Time(sec): " + ((double)(endTime - startTime)/1000) + " sec."
+        );
         alert.showAndWait();
     }
 }

@@ -8,4 +8,8 @@ class CityDocument extends Document {
         super(docId, max_tf, unique_words);
         this.city = city;
     }
+
+    public City getCity() {
+        return city;
+    }
 }

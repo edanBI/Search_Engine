@@ -4,15 +4,12 @@ import javafx.beans.property.*;
 import javafx.beans.value.ObservableValue;
 
 public class DictionaryRecord {
-    /*private String term;
-    private int totalFreq;*/
     private int df;
     private int ptr;
     private double idf;
     private boolean isCapital;
     private StringProperty term;
     private IntegerProperty totalFreq;
-    //private IntegerProperty df;
 
     DictionaryRecord(String term ,int initFreq, boolean isCapital) {
         this.term = new SimpleStringProperty(term);
@@ -27,6 +24,7 @@ public class DictionaryRecord {
         this.term = new SimpleStringProperty(other.term.getValue());
         this.totalFreq = new SimpleIntegerProperty(other.getTotalFreq());
         this.df = other.df;
+        this.idf = other.idf;
         this.isCapital = !other.isCapital();
         ptr = -1;
     }
@@ -39,7 +37,7 @@ public class DictionaryRecord {
         isCapital = Character.isUpperCase(term.charAt(0));
     }
 
-    public DictionaryRecord(String term, int df, int totalFreq, int ptr, double idf)
+    DictionaryRecord(String term, int df, int totalFreq, int ptr, double idf)
     {
         this.term = new SimpleStringProperty(term);
         this.df = df;
@@ -49,48 +47,53 @@ public class DictionaryRecord {
         isCapital = Character.isUpperCase(term.charAt(0));
     }
 
-    public void updateTotalFreq(int val)
+    void updateTotalFreq(int val)
     {
         totalFreq.setValue(totalFreq.getValue() + val);
     }
-    public int getTotalFreq()
+
+    int getTotalFreq()
     {
         return totalFreq.get();
     }
-    public void updateDF()
+
+    void updateDF()
     {
         df++;
     }
-    public int getDF()
+
+    int getDF()
     {
         return df;
     }
+
     public boolean isCapital() {
         return isCapital;
     }
+
     public double getIdf() {
         return idf;
     }
+
     public void setIdf(double idf) {
         this.idf = idf;
     }
-    public void setPtr(int _ptr) {
+
+    void setPtr(int _ptr) {
         this.ptr = _ptr;
     }
 
-    public int getPtr() {
+    int getPtr() {
         return ptr;
     }
-
     // get Property items for the dictionary table
     public StringProperty getTermProperty()
     {
         return term;
     }
+
     public ObservableValue<Integer> getTotalFreqProperty()
     {
         return new ReadOnlyObjectWrapper<>(getTotalFreq());
     }
-
-
 }

@@ -5,7 +5,7 @@ public class PostingRecord {
     private int tf;
     private String places;
 
-    public PostingRecord(String docId, int tf, String places) {
+    PostingRecord(String docId, int tf, String places) {
         this.docId = docId;
         this.tf = tf;
         this.places = places;

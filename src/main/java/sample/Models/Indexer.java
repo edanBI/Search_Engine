@@ -15,7 +15,7 @@ public class Indexer {
     private int numUniqueTerms;
     private BufferedWriter bw_tmpPosting;
     private String postingDir;
-    private final String tmpPostPath = "DB Files/Temporary Postings";
+    private final String tmpPostPath = "/DB Files/Temporary Postings";
 
     private TreeMap<String, City> idxCities;
 
@@ -531,5 +531,9 @@ public class Indexer {
         idxCities = new TreeMap<>(cities);
         idxCities.forEach((name, city) -> city.getDocsRepresent().forEach(docid -> docsSet
                 .put(docid, new CityDocument(docid, -1, -1, city))));
+    }
+
+    public TreeMap<String, City> getIdxCities() {
+        return idxCities;
     }
 }

@@ -17,11 +17,11 @@ public class City {
         docsRepresent.addFirst(initDocId);
         infoByCity(city);
     }
-    public void addDocId(String id) {
+    void addDocId(String id) {
         this.docsRepresent.addLast(id);
     }
 
-    public LinkedList<String> getDocsRepresent() {
+    LinkedList<String> getDocsRepresent() {
         return docsRepresent;
     }
 

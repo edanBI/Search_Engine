@@ -8,12 +8,12 @@ import java.util.*;
 
 public class Parser {
     private HashSet<String> stopWords;
-    private HashMap<String, Integer> months = new HashMap<String, Integer>();
+    private HashMap<String, Integer> months = new HashMap<>();
     private StemmerInterface stemmer = new Stemmer();
     private boolean stmr;
 
     public Parser(String path, boolean stmr) {
-        this.stopWords = new HashSet<String>();
+        this.stopWords = new HashSet<>();
         stopWordsFromFile(path);
         this.stmr = stmr;
         initMonths();
@@ -112,7 +112,7 @@ public class Parser {
                         index = i;
                         i += 1;
                         //tokenized
-                    } else {//term format "number percernt/percentage"
+                    } else {//term format "number percent/percentage"
                         termBuild.append(current + "%");
                         index = i;
                         i += 2;
@@ -150,7 +150,7 @@ public class Parser {
                         index = i;
                         i += 2;
                         //tokenized
-                    } else {//term format "price fracrion dollars"
+                    } else {//term format "price fraction dollars"
                         termBuild.append(current + " " + myList.get(i + 1) + " Dollars");
                         index = i;
                         i += 3;
