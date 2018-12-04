@@ -7,7 +7,7 @@ import java.util.*;
 public class Indexer {
     private TreeMap<String, DictionaryRecord> dictionary; // [term | df ]
     private TreeMap<String, LinkedList<PostingRecord>> tmpPosting; // [ docId | tf ]
-    private HashSet<Document> docsSet;
+    private HashMap<String, Document> docsSet;
     private int numDocsCached;
     private int cachedDocsLimit;
     private int fileCounter;
@@ -17,12 +17,14 @@ public class Indexer {
     private String postingDir;
     private final String tmpPostPath = "DB Files/Temporary Postings";
 
+    private TreeMap<String, City> idxCities;
+
     public Indexer(String finalPostingPath)
     {
         this.postingDir = finalPostingPath;
         this.dictionary = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         this.tmpPosting = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-        this.docsSet = new HashSet<>();
+        this.docsSet = new HashMap<>();
         this.numDocsCached = 0;
         this.fileCounter = 0;
         this.cachedDocsLimit = 10000;
@@ -36,7 +38,7 @@ public class Indexer {
      * @param d_args - terms hashmap
      * @param docId - Document which all the terms belong to.
      */
-    public void processTerms(HashMap<String, Term> d_args, String docId)
+    public void processTerms(HashMap<String, TermData> d_args, String docId)
     {
         int max_tf = -1;
         Set<String> terms = d_args.keySet();
@@ -47,7 +49,6 @@ public class Indexer {
             if (d_args.get(t).gettF() > max_tf)
                 max_tf = d_args.get(t).gettF();
             //checks whether the term is already inside the dictionary, else add it
-
             DictionaryRecord tmp;
             if (dictionary.containsKey(t))
             {
@@ -68,14 +69,19 @@ public class Indexer {
             }
             // checks whether the term is already inside the posting list
             if (tmpPosting.containsKey(t))
-                tmpPosting.get(t).add(new PostingRecord(docId, d_args.get(t).gettF()));
+                tmpPosting.get(t).add(new PostingRecord(docId, d_args.get(t).gettF(), d_args.get(t).getPlaces()));
             else {
                 tmpPosting.put(t, new LinkedList<>());
-                tmpPosting.get(t).add(new PostingRecord(docId, d_args.get(t).gettF()));
+                tmpPosting.get(t).add(new PostingRecord(docId, d_args.get(t).gettF(), d_args.get(t).getPlaces()));
             }
         }
-        // adds the current document to the documents hashset.
-        docsSet.add(new Document(docId, max_tf, d_args.size()));
+        if (docsSet.containsKey(docId)) {
+            CityDocument tmp = (CityDocument) docsSet.get(docId);
+            tmp.setMax_tf(max_tf);
+            tmp.setUnique_words(d_args.size());
+        } else {// adds the current document to the documents hashset.
+            docsSet.put(docId, new Document(docId, max_tf, d_args.size()));
+        }
 
         if (numDocsCached == cachedDocsLimit)
         {
@@ -414,7 +420,7 @@ public class Indexer {
     /**
      * @return the Documents Set.
      */
-    public HashSet<Document> getDocsSet()
+    public HashMap<String, Document> getDocsSet()
     {
         return docsSet;
     }
@@ -425,14 +431,7 @@ public class Indexer {
      */
     public Document getDocumentById(String docId)
     {
-        Iterator<Document> it = docsSet.iterator();
-        Document document;
-        while (it.hasNext()) {
-            document = it.next();
-            if (document.getDoc_id().equals(docId))
-                return document;
-        }
-        return null;
+        return docsSet.get(docId);
     }
 
     /**
@@ -494,7 +493,7 @@ public class Indexer {
      */
     private void updateIDFs()
     {
-        dictionary.forEach((t, record) -> record.setIdf(DoubleMath.log2(numDocsIndexed / record.getDF())));
+        dictionary.forEach((t, record) -> record.setIdf(DoubleMath.log2((double) numDocsIndexed / (double) record.getDF())));
     }
 
     /**
@@ -504,26 +503,33 @@ public class Indexer {
      */
     public static TreeMap<String, DictionaryRecord> readDictionaryFromFile(String path) throws IOException
     {
+        int len = 0;
         TreeMap<String, DictionaryRecord> dictionary = new TreeMap<>();
         BufferedReader br = new BufferedReader(new FileReader(path + "/dictionary.txt"));
         String curr = br.readLine();
-        int l = 0;
         while (curr != null)
         {
             String term = curr.substring(0, curr.indexOf("---"));
-            l += term.length() + 3;
-            int df = Integer.parseInt(curr.substring(l, curr.indexOf("---", l)));
-            l += Integer.toString(df).length() + 3;
-            int totalFreq = Integer.parseInt(curr.substring(l, curr.indexOf("---", l)));
-            l += Integer.toString(totalFreq).length() + 3;
-            int ptr = Integer.parseInt(curr.substring(l, curr.indexOf("---", l)));
-            l += Integer.toString(ptr).length() + 3;
-            double idf = Double.parseDouble(curr.substring(l));
+            len += term.length() + 3;
+            int df = Integer.parseInt(curr.substring(len, curr.indexOf("---", len)));
+            len += Integer.toString(df).length() + 3;
+            int totalFreq = Integer.parseInt(curr.substring(len, curr.indexOf("---", len)));
+            len += Integer.toString(totalFreq).length() + 3;
+            int ptr = Integer.parseInt(curr.substring(len, curr.indexOf("---", len)));
+            len += Integer.toString(ptr).length() + 3;
+            double idf = Double.parseDouble(curr.substring(len));
 
             dictionary.put(term, new DictionaryRecord(term, df, totalFreq, ptr, idf));
             curr = br.readLine();
-            l=0;
+            len=0;
         }
         return dictionary;
+    }
+
+    public void indexCities(HashMap<String, City> cities)
+    {
+        idxCities = new TreeMap<>(cities);
+        idxCities.forEach((name, city) -> city.getDocsRepresent().forEach(docid -> docsSet
+                .put(docid, new CityDocument(docid, -1, -1, city))));
     }
 }

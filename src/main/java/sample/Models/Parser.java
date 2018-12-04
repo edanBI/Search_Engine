@@ -26,14 +26,12 @@ public class Parser {
             String st;
             while ((st = br.readLine()) != null)
                 this.stopWords.add(st.trim());
-        } catch (IOException e) {
-            e.getStackTrace();
-        }
+        } catch (IOException e) { e.getStackTrace(); }
     }
 
-    public HashMap<String, Term> Parsing(String text) {
-        HashMap<String, Term> dictionary = new HashMap<String, Term>();
-        ArrayList<String> myList = new ArrayList<String>();
+    public HashMap<String, TermData> Parsing(String text) {
+        HashMap<String, TermData> dictionary = new HashMap<>();
+        ArrayList<String> myList = new ArrayList<>();
         StringBuilder termBuild = new StringBuilder();
         homeMadeSplit(myList, text);
         int i = 0;
@@ -399,8 +397,9 @@ public class Parser {
                     } else {
                         int tf = dictionary.get(termToDic.toUpperCase()).gettF() + 1;
                         boolean isImportant = dictionary.get(termToDic.toUpperCase()).getImportant();
+                        String place = dictionary.get(termToDic.toUpperCase()).getPlaces();
                         dictionary.remove(termToDic.toUpperCase());
-                        dictionary.put(termToDic.toLowerCase(), new Term(isImportant, tf));
+                        dictionary.put(termToDic.toLowerCase(), new TermData(isImportant, tf, place, index));
                         i++;
                         //tokenized
                         continue;
@@ -468,22 +467,21 @@ public class Parser {
      * @param index - for creating the term objact and check the place of the token if he is un the first 30 indexs so he is important
      * @return
      */
-    private void addToDictonary(HashMap<String, Term> dic, String token, int index) {
+    private void addToDictonary(HashMap<String, TermData> dic, String token, int index) {
         boolean isImportant = false;
         if (index < 30)
             isImportant = true;
 
         if (dic.containsKey(token)) {
             dic.get(token).settF(dic.get(token).gettF() + 1);
+            dic.get(token).setPlace(index);
         } else
-            dic.put(token, new Term(isImportant, 1));
+            dic.put(token, new TermData(isImportant, 1,index));
     }
 
     /**
      * check if token is phrase
-     *
-     * @param str
-     * @return
+     * @return true if 'str' is a phrase
      */
     private static boolean isRange(String str) {
         String[] s = str.split("-");
@@ -495,9 +493,7 @@ public class Parser {
 
     /**
      * check if string is number
-     *
-     * @param strNum
-     * @return
+     * @return true if the argument is a number.
      */
     private static boolean isNumber(String strNum) {
         StringBuilder stringBuilder = new StringBuilder();
@@ -570,20 +566,6 @@ public class Parser {
         return stringBuilder.toString();
     }
 
-    /*private static String cleanString(String str) {
-        if (str.contains("$") || str.contains("%") || str.contains("-") || str.contains("/") || str.contains(",") || str.contains(".")) {
-            StringBuilder sb = new StringBuilder();
-            for (int i = 0; str.length() > i; i++) {
-                char c = str.charAt(i);
-                if (c != '$' && c != '%' && c != '-' && c != '/' && c != ',' && c != '.' && c != ':')
-                    sb.append(c);
-            }
-            return sb.toString();
-        } else {
-            return str;
-        }
-    }*/
-
     /**
      * check if the string is homeMadeSplit number that lower then million
      *
@@ -640,6 +622,7 @@ public class Parser {
         if ((str.toUpperCase().equals("A") || str.toUpperCase().equals("P")) && c.toString().toUpperCase().equals("M"))
             return true;
         if ((str.toUpperCase().equals("A.M") || str.toUpperCase().equals("P.M")) && c == ' ') return true;
+        if (str.toUpperCase().equals("ST") && ( c==' ' || c.toString().toUpperCase().contains("P"))) return true;
 
         if (!Character.isDigit(c))
             return false;

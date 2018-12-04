@@ -1,5 +1,7 @@
 package sample.Controllers;
 
+import javafx.beans.value.ChangeListener;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -14,14 +16,13 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import org.apache.commons.io.FileUtils;
 import sample.Models.*;
+
+import java.awt.event.MouseEvent;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.ResourceBundle;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.stream.Collectors;
 
 public class MainWindowController implements Initializable
@@ -30,6 +31,7 @@ public class MainWindowController implements Initializable
     private long startTime, endTime;
     private String corpus_path, postings_path;
     private Indexer indexer;
+    private ReadFile readFile;
 
     public MainWindowController() { toStem = false; }
 
@@ -71,21 +73,22 @@ public class MainWindowController implements Initializable
     public Button btn_generate;
     public CheckBox chbx_stemming;
     public ImageView imageView_logo;
+    public MenuButton m_languages;
 
     @FXML
     public void initDataSet()
     {
-        if (corpus_path==null || postings_path==null)
-        {
+        if (corpus_path==null || postings_path==null) {
             showAlert();
             return;
         }
         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...");
         alert.show();
         startTime = System.currentTimeMillis();
-        ReadFile readFile = new ReadFile(corpus_path);
+        readFile = new ReadFile(corpus_path);
         Parser parser = new Parser(corpus_path+"/stop_words.txt", toStem);
         indexer = new Indexer(postings_path);
+        indexer.indexCities(readFile.getAllDocsCity());
         HashMap<String,String> files;//will be fill by docid and text of the files
         for (int i = 0 ; i<readFile.getListOfFilePath().size() ; i++){
             files = readFile.read(readFile.getListOfFilePath().get(i));//filling the docs file by file
@@ -150,6 +153,7 @@ public class MainWindowController implements Initializable
         chbx_stemming.setSelected(false);
         chbx_stemming.setIndeterminate(false);
         toStem = false;
+        m_languages.getItems().clear();
     }
 
     @FXML
@@ -216,6 +220,20 @@ public class MainWindowController implements Initializable
             java.awt.Toolkit.getDefaultToolkit().beep();
             alert.showAndWait();
         }
+    }
+
+    @FXML
+    public void addLanguages()
+    {
+        if (readFile == null)
+            return;
+        m_languages.maxHeight(100.0);
+        m_languages.getItems().clear();
+        HashSet<String> languages = readFile.getAllDocsLanguage();
+        languages.forEach((lang) -> {
+            MenuItem menuItem = new MenuItem(lang);
+            m_languages.getItems().add(menuItem);
+        });
     }
 
     private void displaySummary()

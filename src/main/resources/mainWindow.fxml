@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="vBox_mainWindows" prefHeight="506.0" prefWidth="744.0" xmlns="http://javafx.com/javafx/8.0.121" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controllers.MainWindowController">
+<VBox fx:id="vBox_mainWindows" prefHeight="506.0" prefWidth="744.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controllers.MainWindowController">
    <children>
       <AnchorPane prefHeight="200.0" prefWidth="200.0">
          <children>
@@ -44,11 +44,10 @@
       <AnchorPane prefHeight="44.0" prefWidth="730.0">
          <children>
             <CheckBox fx:id="chbx_stemming" layoutX="49.0" mnemonicParsing="false" onAction="#setToStem" prefHeight="33.0" prefWidth="96.0" text="Stemming" />
-            <MenuButton fx:id="m_language" layoutX="474.0" layoutY="2.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="150.0" text="Language">
-              <items>
-                <MenuItem mnemonicParsing="false" text="Action 1" />
-                <MenuItem mnemonicParsing="false" text="Action 2" />
-              </items>
+            <MenuButton fx:id="m_languages" layoutX="474.0" layoutY="2.0" mnemonicParsing="false" onMouseClicked="#addLanguages" prefHeight="31.0" prefWidth="150.0" text="Language">
+               <items>
+                  <MenuItem mnemonicParsing="false" text="none" />
+               </items>
             </MenuButton>
          </children>
       </AnchorPane>

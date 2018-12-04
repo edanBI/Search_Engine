@@ -2,9 +2,11 @@
   <dictionary name="user">
     <words>
       <w>chbx</w>
+      <w>currencycode</w>
       <w>hashset</w>
       <w>idf</w>
       <w>stmr</w>
+      <w>tokenized</w>
     </words>
   </dictionary>
 </component>
