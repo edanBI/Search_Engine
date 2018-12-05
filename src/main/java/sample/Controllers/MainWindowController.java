@@ -94,8 +94,8 @@ public class MainWindowController implements Initializable
             }
         }
         indexer.flushTmpPosting(); //clear all the remaining terms which haven't written to disk
-        indexer.mergeTmpPostingFiles(); // build final posting files
-        indexer.writeDictionaryToDisk(); // store all the dictionary in disk
+        indexer.mergeTmpPostingFiles(toStem); // build final posting files
+        indexer.writeDictionaryToDisk(toStem); // store all the dictionary in disk
         try { FileUtils.deleteDirectory(new File("DB Files")); } // delete all temporary files
         catch (IOException e) { e.printStackTrace(); }
         endTime = System.currentTimeMillis();
@@ -137,8 +137,13 @@ public class MainWindowController implements Initializable
     public void reset()
     {
         try {
-            new File(postings_path + "/dictionary.txt").delete();
-            FileUtils.deleteDirectory(new File(postings_path + "/Posting Files"));
+            if (!toStem) {
+                new File(postings_path + "/dictionary.txt").delete();
+                FileUtils.deleteDirectory(new File(postings_path + "/Posting Files"));
+            } else {
+                new File(postings_path + "/dictionary_stemmer.txt").delete();
+                FileUtils.deleteDirectory(new File(postings_path + "/Posting Files_stemmer"));
+            }
         }
         catch (IOException e) { e.printStackTrace(); }
         txt_corpus_path.clear();
@@ -157,7 +162,12 @@ public class MainWindowController implements Initializable
         try {
             Stage d_window = new Stage();
             d_window.setTitle("Dictionary");
-            Collection<DictionaryRecord> list = Files.readAllLines(new File(postings_path + "/dictionary.txt").toPath()).stream()
+            String dic_path;
+            if (this.toStem)
+                dic_path = postings_path + "/dictionary_stemmer.txt";
+            else
+                dic_path = postings_path + "/dictionary.txt";
+            Collection<DictionaryRecord> list = Files.readAllLines(new File(dic_path).toPath()).stream()
                     .map(line -> {
                         String[] row = line.split("---");
                         String term = row[0];

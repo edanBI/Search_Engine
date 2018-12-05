@@ -15,7 +15,7 @@ public class Indexer {
     private int numUniqueTerms;
     private BufferedWriter bw_tmpPosting;
     private String postingDir;
-    private final String tmpPostPath = "/DB Files/Temporary Postings";
+    private final String tmpPostPath = "DB Files/Temporary Postings";
 
     private TreeMap<String, City> idxCities;
 
@@ -142,7 +142,7 @@ public class Indexer {
     /**
      * this is a wrapper for the merge sorting method.
      */
-    public void mergeTmpPostingFiles()
+    public void mergeTmpPostingFiles(boolean stem)
     {
         ArrayList<String> filesList = new ArrayList<>(getFiles());
         filesList.sort(new Comparator<String>() {
@@ -161,19 +161,23 @@ public class Indexer {
                 filesList.add(filesList.size(), "posting"+fileCounter+".txt");
                 fileCounter++;
             }
-            createPostings(tmpPostPath + "/" + filesList.remove(0)); //CREATE THE POSTING FILES
+            createPostings(tmpPostPath + "/" + filesList.remove(0), stem); //CREATE THE POSTING FILES
         } catch (Exception e) { e.printStackTrace(); }
     }
 
     /**
      * writes the entire dictionary into the disk.
      */
-    public void writeDictionaryToDisk()
+    public void writeDictionaryToDisk(boolean stem)
     {
         numUniqueTerms = dictionary.size();
         updateIDFs();
         try {
-            File dictionary_file = new File(postingDir + "/dictionary.txt");
+            File dictionary_file;
+            if (stem)
+                dictionary_file = new File(postingDir + "/dictionary_stemmer.txt");
+            else
+                dictionary_file = new File(postingDir + "/dictionary.txt");
             BufferedWriter br = new BufferedWriter(new FileWriter(dictionary_file));
             dictionary.forEach((term, record) -> {
                 try {
@@ -281,25 +285,34 @@ public class Indexer {
      * @param mergedFileName is the merged file path
      * @throws IOException in the event of an IO exception thrown, if unable to read or write.
      */
-    private void createPostings(String mergedFileName) throws IOException
+    private void createPostings(String mergedFileName, boolean stem) throws IOException
     {
-        File postingDir = new File(this.postingDir + "/Posting Files");
+        String postingDir_path;
+        File postingDir;
+        if (stem) {
+            postingDir_path = this.postingDir + "/Posting Files_stemmer";
+            postingDir = new File(postingDir_path);
+        }
+        else {
+            postingDir_path = this.postingDir + "/Posting Files";
+            postingDir = new File(postingDir_path);
+        }
         if (!postingDir.exists()) postingDir.mkdirs();
         BufferedReader br = new BufferedReader(new FileReader(mergedFileName));
-        BufferedWriter bw_$9 = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/$-9.txt"), 30000);
-        BufferedWriter bw_AB = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/A-B.txt"), 30000);
-        BufferedWriter bw_CD = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/C-D.txt"), 30000);
-        BufferedWriter bw_EF = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/E-F.txt"), 30000);
-        BufferedWriter bw_GH = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/G-H.txt"), 30000);
-        BufferedWriter bw_IJ = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/I-J.txt"), 30000);
-        BufferedWriter bw_KL = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/K-L.txt"), 30000);
-        BufferedWriter bw_MN = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/M-N.txt"), 30000);
-        BufferedWriter bw_OP = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/O-P.txt"), 30000);
-        BufferedWriter bw_QR = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/Q-R.txt"), 30000);
-        BufferedWriter bw_ST = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/S-T.txt"), 30000);
-        BufferedWriter bw_UV = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/U-V.txt"), 30000);
-        BufferedWriter bw_WX = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/W-X.txt"), 30000);
-        BufferedWriter bw_YZ = new BufferedWriter(new FileWriter(this.postingDir + "/Posting Files/Y-Z.txt"), 30000);
+        BufferedWriter bw_$9 = new BufferedWriter(new FileWriter(postingDir_path + "/$-9.txt"), 30000);
+        BufferedWriter bw_AB = new BufferedWriter(new FileWriter(postingDir_path + "/A-B.txt"), 30000);
+        BufferedWriter bw_CD = new BufferedWriter(new FileWriter(postingDir_path + "/C-D.txt"), 30000);
+        BufferedWriter bw_EF = new BufferedWriter(new FileWriter(postingDir_path + "/E-F.txt"), 30000);
+        BufferedWriter bw_GH = new BufferedWriter(new FileWriter(postingDir_path + "/G-H.txt"), 30000);
+        BufferedWriter bw_IJ = new BufferedWriter(new FileWriter(postingDir_path + "/I-J.txt"), 30000);
+        BufferedWriter bw_KL = new BufferedWriter(new FileWriter(postingDir_path + "/K-L.txt"), 30000);
+        BufferedWriter bw_MN = new BufferedWriter(new FileWriter(postingDir_path + "/M-N.txt"), 30000);
+        BufferedWriter bw_OP = new BufferedWriter(new FileWriter(postingDir_path + "/O-P.txt"), 30000);
+        BufferedWriter bw_QR = new BufferedWriter(new FileWriter(postingDir_path + "/Q-R.txt"), 30000);
+        BufferedWriter bw_ST = new BufferedWriter(new FileWriter(postingDir_path + "/S-T.txt"), 30000);
+        BufferedWriter bw_UV = new BufferedWriter(new FileWriter(postingDir_path + "/U-V.txt"), 30000);
+        BufferedWriter bw_WX = new BufferedWriter(new FileWriter(postingDir_path + "/W-X.txt"), 30000);
+        BufferedWriter bw_YZ = new BufferedWriter(new FileWriter(postingDir_path + "/Y-Z.txt"), 30000);
         String curr_line = br.readLine();
         String curr_term = "", prev_term;
         int i$9=0, iAB=0, iCD=0, iEF=0, iGH=0, iIJ=0, iKL=0, iMN=0, iOP=0, iQR=0, iST=0, iUV=0, iWX=0, iYZ=0;

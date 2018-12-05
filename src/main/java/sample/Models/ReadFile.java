@@ -124,12 +124,14 @@ public class ReadFile {
 
                 if (!language.toString().isEmpty())
                     allDocsLanguage.add(language.toString());
-                if (!allDocsCity.containsKey(city.toString())) {
-                    City city1 = new City(city.toString(), id.toString());
-                    if (city1.getCountry() != null)
-                        allDocsCity.put(city.toString(), city1);
-                } else {
-                    allDocsCity.get(city.toString()).addDocId(id.toString());
+                if(!city.toString().isEmpty()) {
+                    if (!allDocsCity.containsKey(city.toString())) {
+                        City city1 = new City(city.toString(), id.toString());
+                        if (!city1.getCountry().isEmpty())
+                            allDocsCity.put(city.toString(), city1);
+                    } else {
+                        allDocsCity.get(city.toString()).addDocId(id.toString());
+                    }
                 }
                 textById.put(id.toString().trim(), text.toString());
                 text.delete(0, text.length());

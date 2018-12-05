@@ -1,12 +1,15 @@
 package sample.Models;
 
 import java.io.BufferedReader;
+import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
+import java.util.HashMap;
 import java.util.LinkedList;
 
 public class City {
+    private static HashMap<String, String> restCountriesAPI = new HashMap<>();
     private String country;
     private String currency;
     private String population;
@@ -39,35 +42,40 @@ public class City {
         return population;
     }
 
-    private void infoByCity(String city)
-    {
+    static {
+        String inputLine;
+        String path = "/city1.txt";
+        try {
+            BufferedReader in = new BufferedReader(
+                    new FileReader(path));
+            StringBuilder x = new StringBuilder();
+            while ((inputLine = in.readLine()) != null)
+                x.append(inputLine);
+            in.close();
+            x.deleteCharAt(0);
+            while (!x.toString().isEmpty() && x.toString().contains("@")) {
+                restCountriesAPI.put(x.substring(0, x.toString().indexOf(":")).toUpperCase(), x.substring(x.toString().indexOf(":") + 1, x.toString().indexOf("@")));
+                x.delete(0, x.indexOf("@") + 1);
+            }
+            restCountriesAPI.put(x.substring(0, x.toString().indexOf(":")), x.substring(x.toString().indexOf(":") + 1, x.toString().length()));
+        } catch (Exception e) {
+e.getStackTrace();
+        }
+    }
+
+
+    private void infoByCity(String city) {
         StringBuilder stringBuilder = new StringBuilder();
         StringBuilder country = new StringBuilder();
         StringBuilder currency = new StringBuilder();
         StringBuilder population = new StringBuilder();
         String inputLine;
-        try {
-            URL oracle = new URL("https://restcountries.eu/rest/v2/capital/" + city);
-            BufferedReader in = new BufferedReader(
-                    new InputStreamReader(oracle.openStream()));
-            while ((inputLine = in.readLine()) != null)
-                stringBuilder.append(inputLine);
-            in.close();
-            country.append(stringBuilder.toString().substring(10, stringBuilder.indexOf(",") - 1));
-            if (country.toString().isEmpty()) {
-                stringBuilder.delete(0,stringBuilder.length());
-                this.country = null;
-            } else {
-                stringBuilder.delete(0, stringBuilder.toString().indexOf("population"));
-                population.append(stringBuilder.toString().substring(12, stringBuilder.indexOf(",") - 1));
-                population.replace(0, population.length(), population(stringBuilder.toString().substring(12, stringBuilder.indexOf(",") - 1)));
-                stringBuilder.delete(0, stringBuilder.toString().indexOf("currencies"));
-                currency.append(stringBuilder.toString().substring(22, stringBuilder.indexOf(",") - 1));
-                this.country = country.toString();
-                this.currency = currency.toString();
-                this.population = population.toString();
-            }
-        } catch (java.io.IOException e) {
+        if (restCountriesAPI.containsKey(city.toUpperCase())) {
+            String cityInfo = restCountriesAPI.get(city.toUpperCase());
+            this.country = cityInfo.substring(cityInfo.indexOf(":") + 1, cityInfo.indexOf("*"));
+            this.population = population(cityInfo.substring(cityInfo.indexOf("*") + 1, cityInfo.indexOf("+")));
+            this.currency = cityInfo.substring(cityInfo.indexOf("+") + 1, cityInfo.length());
+        } else {
             try {
                 URL oracle1 = new URL("http://getcitydetails.geobytes.com/GetCityDetails?fqcn=" + city);
                 BufferedReader in = new BufferedReader(
@@ -79,7 +87,7 @@ public class City {
                 country.append(stringBuilder.toString().substring(10, stringBuilder.indexOf(",") - 1));
                 if (country.toString().isEmpty()) {
                     stringBuilder.delete(0, stringBuilder.length());
-                    this.country = null;
+                    this.country = "";
                 } else {
                     stringBuilder.delete(0, stringBuilder.toString().indexOf("population"));
                     population.append(population(stringBuilder.toString().substring(13, stringBuilder.indexOf(",") - 1)));
@@ -89,7 +97,10 @@ public class City {
                 this.currency = currency.toString();
                 this.country = country.toString();
                 this.population = population.toString();
-            } catch (IOException e1) { e.printStackTrace(); }
+            } catch (IOException e1) {
+                e1.printStackTrace();
+            }
+
         }
     }
 
