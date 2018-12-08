@@ -164,15 +164,17 @@ public class MainWindowController implements Initializable
             d_window.setTitle("Dictionary");
             String dic_path;
             if (this.toStem)
-                dic_path = postings_path + "/dictionary_stemmer.txt";
+                dic_path = postings_path + "\\dictionary_stemmer.txt";
             else
-                dic_path = postings_path + "/dictionary.txt";
+                dic_path = postings_path + "\\dictionary.txt";
             Collection<DictionaryRecord> list = Files.readAllLines(new File(dic_path).toPath()).stream()
                     .map(line -> {
                         String[] row = line.split("---");
                         String term = row[0];
                         int df = Integer.parseInt(row[1]);
                         int freq = Integer.parseInt(row[2]);
+                        if (term.length()==0)
+                            term = "-";
                         return new DictionaryRecord(term, df, freq);
                     }).collect(Collectors.toList());
             ObservableList<DictionaryRecord> details = FXCollections.observableArrayList(list);
@@ -197,9 +199,10 @@ public class MainWindowController implements Initializable
             scrollPane.setFitToWidth(true);
             Scene scene = new Scene(scrollPane, 515, 705);
             d_window.setScene(scene);
-            d_window.setResizable(false);
+            //d_window.setResizable(false);
             d_window.show();
         } catch (Exception e) {
+            //e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.ERROR, "Dictionary is unavailable");
             java.awt.Toolkit.getDefaultToolkit().beep();
             alert.showAndWait();
