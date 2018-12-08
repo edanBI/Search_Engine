@@ -44,10 +44,9 @@ public class City {
 
     static {
         String inputLine;
-        String path = "/city1.txt";
+        String path = "src/main/resources/city1.txt";
         try {
-            BufferedReader in = new BufferedReader(
-                    new FileReader(path));
+            BufferedReader in = new BufferedReader(new FileReader(path));
             StringBuilder x = new StringBuilder();
             while ((inputLine = in.readLine()) != null)
                 x.append(inputLine);
@@ -59,7 +58,7 @@ public class City {
             }
             restCountriesAPI.put(x.substring(0, x.toString().indexOf(":")), x.substring(x.toString().indexOf(":") + 1, x.toString().length()));
         } catch (Exception e) {
-e.getStackTrace();
+            e.getStackTrace();
         }
     }
 
