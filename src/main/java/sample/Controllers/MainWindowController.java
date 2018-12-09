@@ -215,6 +215,8 @@ public class MainWindowController implements Initializable
         try {
             String str = txt_postings_path.getText();
             TreeMap<String, DictionaryRecord> loadedDictionary = Indexer.readDictionaryFromFile(str);
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Dictionary Loaded");
+            alert.show();
         } catch (IOException e) {
             Alert alert = new Alert(Alert.AlertType.ERROR, "Missing Posting Path");
             java.awt.Toolkit.getDefaultToolkit().beep();

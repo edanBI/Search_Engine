@@ -13,8 +13,11 @@ import java.util.Iterator;
 
 public class ReadFile {
     private String path;
+    //list of all the file path in the corpus
     private ArrayList<String> listOfFilePath;
+    //list of all languages of documents in the corpus
     private HashSet<String> allDocsLanguage;
+    //list of all cities of documents in the corpus
     private HashMap<String, City> allDocsCity;
 
     public ArrayList<String> getListOfFilePath() {
@@ -37,6 +40,11 @@ public class ReadFile {
         return allDocsCity;
     }
 
+    /**
+     * fill the listOfFilePath with all files in the corpus
+     *
+     * @param path
+     */
     private void filesForFolder(String path) {
         final File folder = new File(path);
         for (final File fileEntry : folder.listFiles()) {
@@ -49,6 +57,13 @@ public class ReadFile {
         }
     }
 
+    /**
+     * read file and spliting it documents
+     * also find thier ID and the represtnted languages and cities for each document
+     *
+     * @param path
+     * @return
+     */
     public HashMap<String, String> read(String path) {
         HashMap<String, String> textById = new HashMap<>();
         StringBuilder text = new StringBuilder();
@@ -67,6 +82,7 @@ public class ReadFile {
                 id.append(element.getElementsByTag("DOCNO"));
                 id.delete(0, 7);
                 id.delete(id.length() - 8, id.length());
+                id.replace(0, id.length(), id.toString().trim());
 
                 //Text of the document by <text> tag
                 text.append(element.getElementsByTag("TEXT"));
@@ -122,9 +138,11 @@ public class ReadFile {
                     }
                 } else language.delete(0, language.length());
 
+                //add language to allDocsLanguage
                 if (!language.toString().isEmpty())
                     allDocsLanguage.add(language.toString());
-                if(!city.toString().isEmpty()) {
+                //add city to allDocsCity and update for cities that founded the document ID they depand on
+                if (!city.toString().isEmpty()) {
                     if (!allDocsCity.containsKey(city.toString())) {
                         City city1 = new City(city.toString(), id.toString());
                         if (!city1.getCountry().isEmpty())
@@ -133,7 +151,7 @@ public class ReadFile {
                         allDocsCity.get(city.toString()).addDocId(id.toString());
                     }
                 }
-                textById.put(id.toString().trim(), text.toString());
+                textById.put(id.toString(), text.toString());
                 text.delete(0, text.length());
                 id.delete(0, id.length());
                 city.delete(0, city.length());

@@ -523,6 +523,8 @@ public class Indexer {
         while (curr != null)
         {
             String term = curr.substring(0, curr.indexOf("---"));
+            if (term.length()==0)
+                term = "-";
             len += term.length() + 3;
             int df = Integer.parseInt(curr.substring(len, curr.indexOf("---", len)));
             len += Integer.toString(df).length() + 3;

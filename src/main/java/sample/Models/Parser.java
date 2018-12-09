@@ -19,6 +19,10 @@ public class Parser {
         initMonths();
     }
 
+    /**
+     * Fill the stopWords HashSet in stop words for this corpos
+     * @param path
+     */
     private void stopWordsFromFile(String path) {
         try {
             File file = new File(path);
@@ -29,6 +33,11 @@ public class Parser {
         } catch (IOException e) { e.getStackTrace(); }
     }
 
+    /**
+     * Parse the text to terms by some the rules
+     * @param text
+     * @return dictionary fill with terms
+     */
     public HashMap<String, TermData> Parsing(String text) {
         HashMap<String, TermData> dictionary = new HashMap<>();
         ArrayList<String> myList = new ArrayList<>();
@@ -49,6 +58,7 @@ public class Parser {
                 /*
                  **********************************Our NEW rules!******************************************
                  */
+                //AM PM rules
                 if ((current.contains(":") && current.charAt(2) == ':' && isNumber(current.substring(0, 2) + current.substring(3, 5))) && (current.length() == 5 || current.toLowerCase().charAt(5) == 'p' || current.toLowerCase().charAt(5) == 'a')) {
                     if (myList.size() - (i + 1) > 0 && (myList.get(i + 1).toLowerCase().equals("a.m.") || myList.get(i + 1).toLowerCase().equals("am") || myList.get(i + 1).toLowerCase().equals("p.m.") || myList.get(i + 1).toLowerCase().equals("pm"))) {//HH:MM AM/PM
                         if (myList.get(i + 1).toLowerCase().equals("a.m.") || myList.get(i + 1).toLowerCase().equals("am"))
@@ -76,6 +86,8 @@ public class Parser {
                         index = i;
                         i += 1;
                         //tokenized
+
+                        //Percent range rule
                     } else if (Integer.parseInt(current.substring(0, 2)) + Integer.parseInt(current.substring(3, 5)) == 100) {//Our percent range term
                         termBuild.append(Integer.parseInt(current.substring(0, 2)) + "%-" + Integer.parseInt(current.substring(3, 5)) + "%");
                         index = i;
@@ -374,6 +386,7 @@ public class Parser {
                 continue;
             }
 
+            //if the current word is not any rule then fill it in as a word and check uppercase and lowercase rules
             String termToDic = "";
             if (termBuild.toString().isEmpty() || toStem==true) {
                 if (this.stmr) {
@@ -429,7 +442,6 @@ public class Parser {
 
     /**
      * spliting the text by delimiter char by char
-     *
      * @param myList - the list to fill
      * @param text   - the text i got to split
      */
@@ -461,7 +473,6 @@ public class Parser {
 
     /**
      * func that add to the Dictionary terms by their values
-     *
      * @param dic   - the hash map to add to it the terms
      * @param token - string of the token will be the Key
      * @param index - for creating the term objact and check the place of the token if he is un the first 30 indexs so he is important
@@ -508,6 +519,12 @@ public class Parser {
         return true;
     }
 
+    /**
+     * check if the string is a number case for the rules that given
+     * number case is price term ,am/pm term ,number term and percent term
+     * @param strNum
+     * @return
+     */
     private static boolean isNumberCase(String strNum) {
         if (strNum.contains("%") || strNum.contains("$") || strNum.contains(":")) return true;
         for (int i = 0; strNum.length() > i; i++) {
@@ -520,9 +537,8 @@ public class Parser {
 
     /**
      * parsing string to number
-     *
      * @param strNum
-     * @return
+     * @return the number as double
      */
     private static double parseNumber(String strNum) {
         StringBuilder stringBuilder = new StringBuilder();
@@ -535,9 +551,8 @@ public class Parser {
 
     /**
      * categorized the number to K/M/B
-     *
      * @param number
-     * @return
+     * @return the number with K/M/B
      */
     private static String isKorMorB(String number) {
         StringBuilder stringBuilder = new StringBuilder();
@@ -568,7 +583,6 @@ public class Parser {
 
     /**
      * check if the string is homeMadeSplit number that lower then million
-     *
      * @param number
      * @return
      */
@@ -591,6 +605,12 @@ public class Parser {
         return false;
     }
 
+    /**
+     * get string before the slash and the char after and return true or false by some rules
+     * @param str
+     * @param c
+     * @return if its a legal slash
+     */
     private static boolean slash(String str, Character c) {
         if (str.equals("0")) return false;
         if (c == '0') return false;
@@ -609,13 +629,24 @@ public class Parser {
         return true;
     }
 
+    /**
+     * get string before the apostrophe and the char after and return true or false by some rules
+     * @param str
+     * @param c
+     * @return if its a legal apostrophe
+     */
     private static boolean apostrophe(String str, Character c) {
         if (str.isEmpty()) return false;
         if (!Character.isLetter(c)) return false;
         return true;
     }
 
-
+    /**
+     * get string before the dot and the char after and return true or false by some rules
+     * @param str
+     * @param c
+     * @return if its a legal dot
+     */
     private static boolean dot(String str, Character c) {
         if (str.equals("U") && c == 'S') return true;
         if (str.equals("U.S") && c == ' ') return true;
@@ -639,17 +670,24 @@ public class Parser {
         return true;
     }
 
-
+    /**
+     * get string before the dash and the char after and return true or false by some rules
+     * @param str
+     * @param c
+     * @return if its a legal dash
+     */
     private static boolean dash(String str, Character c) {
         if (c == ' ') return false;
+        if (str.isEmpty() && c == '-') return false;
         if (str.isEmpty() && Character.isDigit(c)) return true;
         if (str.isEmpty() && c == '$') return true;
-        if (!str.isEmpty() && (Character.isDigit(c) || Character.isLetter(c)) || c == '$') return true;
+        if (!str.isEmpty() && (Character.isDigit(c) || Character.isLetter(c) || c == '$')) return true;
         return false;
     }
 
-
-    //initialize the months
+    /**
+     *initialize the months
+     */
     private void initMonths() {
         months.put("JAN", 1);
         months.put("Jan", 1);

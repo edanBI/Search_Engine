@@ -6,9 +6,14 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URL;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedList;
 
 public class City {
+    //static HashSet that fill by all the cities that searched for and not found
+    private static HashSet<String> notFoundCity = new HashSet<String>();
+    //static HashMap that fill by all the cities as key and their value is string of country*population+currency
+    //that in the rest Countries API
     private static HashMap<String, String> restCountriesAPI = new HashMap<>();
     private String country;
     private String currency;
@@ -20,6 +25,12 @@ public class City {
         docsRepresent.addFirst(initDocId);
         infoByCity(city);
     }
+
+    /**
+     * add a new DOC ID that represent by the city
+     *
+     * @param id
+     */
     void addDocId(String id) {
         this.docsRepresent.addLast(id);
     }
@@ -32,16 +43,18 @@ public class City {
         return country;
     }
 
-    public String getCurrency()
-    {
+    public String getCurrency() {
         return currency;
     }
 
-    public String getPopulation()
-    {
+    public String getPopulation() {
         return population;
     }
 
+    /*
+    static block that fill the restCountriesAPI HashMap by values from the city1.txt file
+    "city1.txt" - is file we made from rest Countries API
+    */
     static {
         String inputLine;
         String path = "src/main/resources/city1.txt";
@@ -62,7 +75,11 @@ public class City {
         }
     }
 
-
+    /**
+     * fill the current city info by search in restCountriesAPI HashMap and geobytes API
+     *
+     * @param city
+     */
     private void infoByCity(String city) {
         StringBuilder stringBuilder = new StringBuilder();
         StringBuilder country = new StringBuilder();
@@ -74,7 +91,8 @@ public class City {
             this.country = cityInfo.substring(cityInfo.indexOf(":") + 1, cityInfo.indexOf("*"));
             this.population = population(cityInfo.substring(cityInfo.indexOf("*") + 1, cityInfo.indexOf("+")));
             this.currency = cityInfo.substring(cityInfo.indexOf("+") + 1, cityInfo.length());
-        } else {
+            //if the city is not in the notFoundCity HashSet search in the geobytes API
+        } else if (!notFoundCity.contains(city.toUpperCase())) {
             try {
                 URL oracle1 = new URL("http://getcitydetails.geobytes.com/GetCityDetails?fqcn=" + city);
                 BufferedReader in = new BufferedReader(
@@ -86,6 +104,7 @@ public class City {
                 country.append(stringBuilder.toString().substring(10, stringBuilder.indexOf(",") - 1));
                 if (country.toString().isEmpty()) {
                     stringBuilder.delete(0, stringBuilder.length());
+                    notFoundCity.add(city.toUpperCase()); //idanW
                     this.country = "";
                 } else {
                     stringBuilder.delete(0, stringBuilder.toString().indexOf("population"));
@@ -100,11 +119,18 @@ public class City {
                 e1.printStackTrace();
             }
 
-        }
+        } else
+            this.country = "";
     }
 
-    public static String population(String number)
-    {
+    /**
+     * get the population of country and return the number with 2 numbers after the decimal point and add K/M/B
+     * to this number
+     *
+     * @param number
+     * @return
+     */
+    public static String population(String number) {
         String x = number.replaceAll(",", "");
         double num = Double.parseDouble(x);
         if (num < 1000)
