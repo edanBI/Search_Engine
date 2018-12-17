@@ -79,7 +79,7 @@ public class MainWindowController implements Initializable
             showAlert();
             return;
         }
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...");
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing... ()()");
         alert.show();
         startTime = System.currentTimeMillis();
         readFile = new ReadFile(corpus_path);
@@ -112,7 +112,7 @@ public class MainWindowController implements Initializable
     public void openFileExplorer(ActionEvent actionEvent)
     {
         DirectoryChooser dc = new DirectoryChooser();
-        //dc.setInitialDirectory(new File("D:\\documents\\users\\benivre\\Downloads"));
+        dc.setInitialDirectory(new File("D:\\documents\\users\\benivre\\Downloads"));
 
         File selectedDir = dc.showDialog(vBox_mainWindows.getScene().getWindow());
         if (actionEvent.getSource().equals(btn_corpus_browse) && selectedDir!=null)
@@ -174,16 +174,8 @@ public class MainWindowController implements Initializable
                 dic_path = postings_path + "\\dictionary_stemmer.txt";
             else
                 dic_path = postings_path + "\\dictionary.txt";
-            Collection<DictionaryRecord> list = Files.readAllLines(new File(dic_path).toPath()).stream()
-                    .map(line -> {
-                        String[] row = line.split("---");
-                        String term = row[0];
-                        int df = Integer.parseInt(row[1]);
-                        int freq = Integer.parseInt(row[2]);
-                        if (term.length()==0)
-                            term = "-";
-                        return new DictionaryRecord(term, df, freq);
-                    }).collect(Collectors.toList());
+
+            Collection<DictionaryRecord> list = indexer.getDictionary().values();
             ObservableList<DictionaryRecord> details = FXCollections.observableArrayList(list);
 
             TableView<DictionaryRecord> tbl_dictionary = new TableView<>();

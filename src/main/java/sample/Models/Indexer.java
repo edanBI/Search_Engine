@@ -123,12 +123,11 @@ public class Indexer {
             dir.mkdirs();
         File file = new File(tmpPostPath + "/posting" + fileCounter + ".txt");
         try {
-            //bw_tmpPosting = new BufferedWriter(new FileWriter(file), cachedDocsLimit*29);
             bw_tmpPosting = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8), cachedDocsLimit*29);
             tmpPosting.forEach((key, value) ->  {
                 try {
                     Iterator<PostingRecord> it = value.iterator();
-                    PostingRecord pr = null;
+                    PostingRecord pr;
                     while (it.hasNext())
                     {
                         pr = it.next();
@@ -162,10 +161,10 @@ public class Indexer {
             dictionary.forEach((term, record) -> {
                 try {
                     br.write(term +
-                            "---" + record.getDF() +
-                            "---" + record.getTotalFreq() +
-                            "---" + record.getPtr() +
-                            "---" + Double.toString(record.getIdf()).substring(0, 7)
+                            "---DF=" + record.getDF() +
+                            "---TF=" + record.getTotalFreq() +
+                            "---PTR=" + record.getPtr() +
+                            "---IDF=" + Double.toString(record.getIdf()).substring(0, 7)
                     );
                     br.newLine();
                 } catch (IOException e) { e.printStackTrace(); }
@@ -198,7 +197,9 @@ public class Indexer {
             }
             if (filesList.size()==1) createPostings(tmpPostPath + "/" + filesList.remove(0), null, stem); //CREATE THE POSTING FILES
             else createPostings(tmpPostPath + "/" + filesList.remove(0), tmpPostPath + "/" + filesList.remove(0), stem); //CREATE THE POSTING FILES
-        } catch (Exception e) { e.printStackTrace(); }
+        }
+        catch (NullPointerException ptr) { ptr.toString(); }
+        catch (Exception e) { e.printStackTrace(); }
     }
 
     /**
@@ -300,7 +301,7 @@ public class Indexer {
      * @param stem is true if stemmer check box is selected.
      * @throws IOException in the event of an IO exception thrown, if unable to read or write.
      */
-    private void createPostings(String left, String right, boolean stem) throws IOException
+    private void createPostings(String left, String right, boolean stem) throws IOException, NullPointerException
     {
         String postingDir_path;
         File postingDir;
@@ -318,21 +319,7 @@ public class Indexer {
         BufferedReader brRight = null;
         if (right!=null) brRight = new BufferedReader(new FileReader(right));
 
-        /*BufferedWriter bw_$9 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/$-9.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_AB = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/A-B.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_CD = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/C-D.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_EF = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/E-F.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_GH = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/G-H.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_IJ = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/I-J.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_KL = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/K-L.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_MN = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/M-N.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_OP = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/O-P.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_QR = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/Q-R.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_ST = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/S-T.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_UV = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/U-V.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_WX = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/W-X.txt"), StandardCharsets.UTF_8), 30000);
-        BufferedWriter bw_YZ = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/Y-Z.txt"), StandardCharsets.UTF_8), 30000);*/
-        BufferedOutputStream bw_$9 = new BufferedOutputStream(new FileOutputStream(new File(postingDir_path + "/$-9.txt")), 30000);
+        BufferedWriter bw_$9 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/$-9.txt"), StandardCharsets.UTF_8), 30000);
         BufferedWriter bw_AB = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/A-B.txt"), StandardCharsets.UTF_8), 30000);
         BufferedWriter bw_CD = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/C-D.txt"), StandardCharsets.UTF_8), 30000);
         BufferedWriter bw_EF = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/E-F.txt"), StandardCharsets.UTF_8), 30000);
@@ -353,7 +340,7 @@ public class Indexer {
             rightLine = brRight.readLine();
         char first;
         int i$9 = 0, iAB = 0, iCD = 0, iEF = 0, iGH = 0, iIJ = 0, iKL = 0, iMN = 0, iOP = 0, iQR = 0, iST = 0, iUV = 0, iWX = 0, iYZ = 0;
-        String leftTerm, rightTerm, curr_term = null, curr_line = null, prev_term = null;
+        String leftTerm, rightTerm, curr_term = null, curr_line, prev_term;
         boolean leftChosen;
 
         while (leftLine!= null || rightLine!=null) {
@@ -381,6 +368,8 @@ public class Indexer {
             first = curr_line.charAt(0);
 
             if (first < 65 || (first > 90 && first < 97) || first > 122) {
+                if (dictionary.get(curr_line)==null)
+                    System.out.println(curr_line);
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(i$9);
                 i$9++;
                 bw_$9.write(curr_line);
@@ -583,16 +572,16 @@ public class Indexer {
         String curr = br.readLine();
         while (curr != null)
         {
-            String term = curr.substring(0, curr.indexOf("---"));
+            String term = curr.substring(0, curr.indexOf("---DF"));
             if (term.length()==0)
                 term = "-";
-            len += term.length() + 3;
-            int df = Integer.parseInt(curr.substring(len, curr.indexOf("---", len)));
-            len += Integer.toString(df).length() + 3;
-            int totalFreq = Integer.parseInt(curr.substring(len, curr.indexOf("---", len)));
-            len += Integer.toString(totalFreq).length() + 3;
-            int ptr = Integer.parseInt(curr.substring(len, curr.indexOf("---", len)));
-            len += Integer.toString(ptr).length() + 3;
+            len += term.length() + 5;
+            int df = Integer.parseInt(curr.substring(len, curr.indexOf("---TF", len)));
+            len += Integer.toString(df).length() + 5;
+            int totalFreq = Integer.parseInt(curr.substring(len, curr.indexOf("---PTR", len)));
+            len += Integer.toString(totalFreq).length() + 6;
+            int ptr = Integer.parseInt(curr.substring(len, curr.indexOf("---IDF", len)));
+            len += Integer.toString(ptr).length() + 6;
             double idf = Double.parseDouble(curr.substring(len));
 
             dictionary.put(term, new DictionaryRecord(term, df, totalFreq, ptr, idf));
@@ -611,5 +600,9 @@ public class Indexer {
 
     public TreeMap<String, City> getIdxCities() {
         return idxCities;
+    }
+
+    public TreeMap<String, DictionaryRecord> getDictionary() {
+        return dictionary;
     }
 }

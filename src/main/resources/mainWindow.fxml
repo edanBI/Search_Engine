@@ -14,7 +14,7 @@
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.VBox?>
 
-<VBox fx:id="vBox_mainWindows" prefHeight="506.0" prefWidth="744.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controllers.MainWindowController">
+<VBox fx:id="vBox_mainWindows" prefHeight="506.0" prefWidth="744.0" xmlns="http://javafx.com/javafx/8.0.131" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controllers.MainWindowController">
    <children>
       <AnchorPane prefHeight="200.0" prefWidth="200.0">
          <children>
@@ -62,7 +62,7 @@
       <AnchorPane prefHeight="31.0" prefWidth="744.0" />
       <AnchorPane layoutX="10.0" layoutY="200.0" prefHeight="47.0" prefWidth="744.0">
          <children>
-            <Button fx:id="btn_display_dic" layoutX="43.0" layoutY="5.0" mnemonicParsing="false" onAction="#displayDictionary" prefHeight="31.0" prefWidth="150.0" text="Display Dictionary" />
+            <Button fx:id="btn_display_dic" layoutX="43.0" layoutY="5.0" mnemonicParsing="false" onAction="#displayDictionary" prefHeight="31.0" prefWidth="150.0" text="Display Dictionary!" />
             <Button fx:id="btn_load_dic" layoutX="230.0" layoutY="5.0" mnemonicParsing="false" onAction="#loadDictionary" prefHeight="31.0" prefWidth="150.0" text="Load Dictionary" />
             <Button fx:id="btn_reset" layoutX="641.0" layoutY="5.0" mnemonicParsing="false" onAction="#reset" prefHeight="31.0" prefWidth="68.0" text="Reset" />
          </children>

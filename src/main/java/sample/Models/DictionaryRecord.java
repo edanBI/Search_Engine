@@ -19,7 +19,7 @@ public class DictionaryRecord {
         ptr = -1;
     }
 
-    DictionaryRecord(DictionaryRecord other)
+    public DictionaryRecord(DictionaryRecord other)
     {
         this.term = new SimpleStringProperty(other.term.getValue());
         this.totalFreq = new SimpleIntegerProperty(other.getTotalFreq());
