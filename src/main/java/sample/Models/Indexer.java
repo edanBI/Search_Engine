@@ -318,7 +318,21 @@ public class Indexer {
         BufferedReader brRight = null;
         if (right!=null) brRight = new BufferedReader(new FileReader(right));
 
-        BufferedWriter bw_$9 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/$-9.txt"), StandardCharsets.UTF_8), 30000);
+        /*BufferedWriter bw_$9 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/$-9.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_AB = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/A-B.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_CD = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/C-D.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_EF = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/E-F.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_GH = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/G-H.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_IJ = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/I-J.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_KL = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/K-L.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_MN = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/M-N.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_OP = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/O-P.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_QR = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/Q-R.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_ST = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/S-T.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_UV = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/U-V.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_WX = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/W-X.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_YZ = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/Y-Z.txt"), StandardCharsets.UTF_8), 30000);*/
+        BufferedOutputStream bw_$9 = new BufferedOutputStream(new FileOutputStream(new File(postingDir_path + "/$-9.txt")), 30000);
         BufferedWriter bw_AB = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/A-B.txt"), StandardCharsets.UTF_8), 30000);
         BufferedWriter bw_CD = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/C-D.txt"), StandardCharsets.UTF_8), 30000);
         BufferedWriter bw_EF = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/E-F.txt"), StandardCharsets.UTF_8), 30000);

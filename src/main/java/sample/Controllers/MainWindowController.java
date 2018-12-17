@@ -112,7 +112,7 @@ public class MainWindowController implements Initializable
     public void openFileExplorer(ActionEvent actionEvent)
     {
         DirectoryChooser dc = new DirectoryChooser();
-        dc.setInitialDirectory(new File("D:\\documents\\users\\benivre\\Downloads"));
+        //dc.setInitialDirectory(new File("D:\\documents\\users\\benivre\\Downloads"));
 
         File selectedDir = dc.showDialog(vBox_mainWindows.getScene().getWindow());
         if (actionEvent.getSource().equals(btn_corpus_browse) && selectedDir!=null)
