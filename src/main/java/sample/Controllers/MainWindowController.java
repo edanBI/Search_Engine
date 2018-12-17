@@ -17,6 +17,7 @@ import sample.Models.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -96,7 +97,7 @@ public class MainWindowController implements Initializable
         indexer.flushTmpPosting(); //clear all the remaining terms which haven't written to disk
         indexer.mergeTmpPostingFiles(toStem); // build final posting files
         indexer.writeDictionaryToDisk(toStem); // store all the dictionary in disk
-        try { FileUtils.deleteDirectory(new File("DB Files")); } // delete all temporary files
+        try { FileUtils.deleteDirectory(new File(postings_path+"/Temporary Postings")); } // delete all temporary files
         catch (IOException e) { e.printStackTrace(); }
         endTime = System.currentTimeMillis();
         alert.close();
@@ -111,6 +112,7 @@ public class MainWindowController implements Initializable
     public void openFileExplorer(ActionEvent actionEvent)
     {
         DirectoryChooser dc = new DirectoryChooser();
+        dc.setInitialDirectory(new File("D:\\documents\\users\\benivre\\Downloads"));
 
         File selectedDir = dc.showDialog(vBox_mainWindows.getScene().getWindow());
         if (actionEvent.getSource().equals(btn_corpus_browse) && selectedDir!=null)
@@ -137,13 +139,18 @@ public class MainWindowController implements Initializable
     public void reset()
     {
         try {
-            if (!toStem) {
-                new File(postings_path + "/dictionary.txt").delete();
-                FileUtils.deleteDirectory(new File(postings_path + "/Posting Files"));
-            } else {
-                new File(postings_path + "/dictionary_stemmer.txt").delete();
-                FileUtils.deleteDirectory(new File(postings_path + "/Posting Files_stemmer"));
-            }
+            File noStemmer = new File(postings_path + "/dictionary.txt");
+            File noStemmerDir = new File(postings_path + "/Posting Files");
+            File stemmer = new File(postings_path + "/dictionary_stemmer.txt");
+            File stemmerDir = new File(postings_path + "/Posting Files_stemmer");
+            if (noStemmer.exists())
+                noStemmer.delete();
+            if (stemmer.exists())
+                stemmer.delete();
+            if (noStemmerDir.exists())
+                FileUtils.deleteDirectory(noStemmerDir);
+            if (stemmerDir.exists())
+                FileUtils.deleteDirectory(stemmerDir);
         }
         catch (IOException e) { e.printStackTrace(); }
         txt_corpus_path.clear();
@@ -183,7 +190,7 @@ public class MainWindowController implements Initializable
             TableColumn<DictionaryRecord, String> clmn_terms = new TableColumn<>();
             TableColumn<DictionaryRecord, Integer> clmn_totalFreq = new TableColumn<>();
             tbl_dictionary.setMinWidth(500.0);
-            tbl_dictionary.setMinHeight(702.0);
+            tbl_dictionary.setMinHeight(802.0);
             clmn_terms.setText("Terms");
             clmn_terms.setMinWidth(300.0);
             clmn_totalFreq.setText("Total Frequency");
@@ -202,7 +209,7 @@ public class MainWindowController implements Initializable
             //d_window.setResizable(false);
             d_window.show();
         } catch (Exception e) {
-            //e.printStackTrace();
+            e.printStackTrace();
             Alert alert = new Alert(Alert.AlertType.ERROR, "Dictionary is unavailable");
             java.awt.Toolkit.getDefaultToolkit().beep();
             alert.showAndWait();

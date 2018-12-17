@@ -2,6 +2,7 @@ package sample.Models;
 
 import com.google.common.math.DoubleMath;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class Indexer {
@@ -15,13 +16,16 @@ public class Indexer {
     private int numUniqueTerms;
     private BufferedWriter bw_tmpPosting;
     private String postingDir;
-    private final String tmpPostPath = "DB Files/Temporary Postings";
+    //private final String tmpPostPath = "DB Files/Temporary Postings";
+    private String tmpPostPath;// = "src/main/resources/Temporary Postings"; //*******
 
     private TreeMap<String, City> idxCities;
 
     public Indexer(String finalPostingPath)
     {
         this.postingDir = finalPostingPath;
+        tmpPostPath = finalPostingPath + "/Temporary Postings";
+        new File(tmpPostPath).mkdirs();
         this.dictionary = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         this.tmpPosting = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
         this.docsSet = new HashMap<>();
@@ -119,7 +123,8 @@ public class Indexer {
             dir.mkdirs();
         File file = new File(tmpPostPath + "/posting" + fileCounter + ".txt");
         try {
-            bw_tmpPosting = new BufferedWriter(new FileWriter(file), cachedDocsLimit*29);
+            //bw_tmpPosting = new BufferedWriter(new FileWriter(file), cachedDocsLimit*29);
+            bw_tmpPosting = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8), cachedDocsLimit*29);
             tmpPosting.forEach((key, value) ->  {
                 try {
                     Iterator<PostingRecord> it = value.iterator();
@@ -140,6 +145,36 @@ public class Indexer {
     }
 
     /**
+     * writes the entire dictionary into the disk.
+     */
+    public void writeDictionaryToDisk(boolean stem)
+    {
+        numUniqueTerms = dictionary.size();
+        updateIDFs();
+        try {
+            File dictionary_file;
+            if (stem)
+                dictionary_file = new File(postingDir + "/dictionary_stemmer.txt");
+            else
+                dictionary_file = new File(postingDir + "/dictionary.txt");
+            //BufferedWriter br = new BufferedWriter(new FileWriter(dictionary_file));
+            BufferedWriter br = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dictionary_file), StandardCharsets.UTF_8));
+            dictionary.forEach((term, record) -> {
+                try {
+                    br.write(term +
+                            "---" + record.getDF() +
+                            "---" + record.getTotalFreq() +
+                            "---" + record.getPtr() +
+                            "---" + Double.toString(record.getIdf()).substring(0, 7)
+                    );
+                    br.newLine();
+                } catch (IOException e) { e.printStackTrace(); }
+            });
+            br.close();
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    /**
      * this is a wrapper for the merge sorting method.
      */
     public void mergeTmpPostingFiles(boolean stem)
@@ -155,43 +190,15 @@ public class Indexer {
             }
         });
         try {
-            while (filesList.size() > 1)
+            while (filesList.size() > 2)
             {
                 mergeSort(filesList.remove(0), filesList.remove(0));
                 filesList.add(filesList.size(), "posting"+fileCounter+".txt");
                 fileCounter++;
             }
-            createPostings(tmpPostPath + "/" + filesList.remove(0), stem); //CREATE THE POSTING FILES
+            if (filesList.size()==1) createPostings(tmpPostPath + "/" + filesList.remove(0), null, stem); //CREATE THE POSTING FILES
+            else createPostings(tmpPostPath + "/" + filesList.remove(0), tmpPostPath + "/" + filesList.remove(0), stem); //CREATE THE POSTING FILES
         } catch (Exception e) { e.printStackTrace(); }
-    }
-
-    /**
-     * writes the entire dictionary into the disk.
-     */
-    public void writeDictionaryToDisk(boolean stem)
-    {
-        numUniqueTerms = dictionary.size();
-        updateIDFs();
-        try {
-            File dictionary_file;
-            if (stem)
-                dictionary_file = new File(postingDir + "/dictionary_stemmer.txt");
-            else
-                dictionary_file = new File(postingDir + "/dictionary.txt");
-            BufferedWriter br = new BufferedWriter(new FileWriter(dictionary_file));
-            dictionary.forEach((term, record) -> {
-                try {
-                    br.write(term +
-                            "---" + record.getDF() +
-                            "---" + record.getTotalFreq() +
-                            "---" + record.getPtr() +
-                            "---" + record.getIdf()
-                    );
-                    br.newLine();
-                } catch (IOException e) { e.printStackTrace(); }
-            });
-            br.close();
-        } catch (IOException e) { e.printStackTrace(); }
     }
 
     /**
@@ -207,12 +214,13 @@ public class Indexer {
         BufferedReader br1 = new BufferedReader(new FileReader(f1), cachedDocsLimit*29);
         BufferedReader br2 = new BufferedReader(new FileReader(f2), cachedDocsLimit*29);
         BufferedWriter bw = new BufferedWriter(
-                new FileWriter(tmpPostPath + "/posting" + fileCounter + ".txt"), cachedDocsLimit*29);
+                new OutputStreamWriter(new
+                        FileOutputStream(tmpPostPath + "/posting" + fileCounter + ".txt"), StandardCharsets.UTF_8),
+                cachedDocsLimit*29);
         String line1 = br1.readLine();
         String line2 = br2.readLine();
         String term1 = line1.substring(0, line1.indexOf(" | "));
         String term2 = line2.substring(0, line2.indexOf(" | "));
-        //String docId1, docId2;
         while (line1!=null || line2!=null)
         {
             if (line1!=null && line2!=null)
@@ -225,12 +233,11 @@ public class Indexer {
                     if (line1!=null)
                         term1 = line1.substring(0, line1.indexOf(" | "));
                 }
-                else if (term1.compareToIgnoreCase(term2) == 0)
+                else if (term1.compareToIgnoreCase(term2) == 0) //term1 == term2
                 {
-                    if ( idCompare(
+                    /*if ( idCompare(
                             line1.substring(line1.indexOf("=")+1, line1.indexOf(", tf=")),
-                            line2.substring(line2.indexOf("=")+1, line2.indexOf(", tf=")))
-                            < 0)
+                            line2.substring(line2.indexOf("=")+1, line2.indexOf(", tf="))) < 0)
                     {
                         bw.write(line1);
                         bw.newLine();
@@ -244,7 +251,13 @@ public class Indexer {
                         line2 = br2.readLine();
                         if (line2!=null)
                             term2 = line2.substring(0, line2.indexOf(" | "));
-                    }
+                    }*/
+
+                    bw.write(line1);
+                    bw.newLine();
+                    line1 = br1.readLine();
+                    if (line1!=null)
+                        term1 = line1.substring(0, line1.indexOf(" | "));
                 }
                 else { // term2 is alphabetically before term1 OR term1==term2
                     bw.write(line2);
@@ -282,13 +295,16 @@ public class Indexer {
     /**
      * Creates the final posting files in the disk. All the symbols and number has their own posting file and
      * each pair of letters has his own posting file.
-     * @param mergedFileName is the merged file path
+     * @param left is the first file path.
+     * @param right is the second file path.
+     * @param stem is true if stemmer check box is selected.
      * @throws IOException in the event of an IO exception thrown, if unable to read or write.
      */
-    private void createPostings(String mergedFileName, boolean stem) throws IOException
+    private void createPostings(String left, String right, boolean stem) throws IOException
     {
         String postingDir_path;
         File postingDir;
+        // create the directory
         if (stem) {
             postingDir_path = this.postingDir + "/Posting Files_stemmer";
             postingDir = new File(postingDir_path);
@@ -298,32 +314,59 @@ public class Indexer {
             postingDir = new File(postingDir_path);
         }
         if (!postingDir.exists()) postingDir.mkdirs();
-        BufferedReader br = new BufferedReader(new FileReader(mergedFileName));
-        BufferedWriter bw_$9 = new BufferedWriter(new FileWriter(postingDir_path + "/$-9.txt"), 30000);
-        BufferedWriter bw_AB = new BufferedWriter(new FileWriter(postingDir_path + "/A-B.txt"), 30000);
-        BufferedWriter bw_CD = new BufferedWriter(new FileWriter(postingDir_path + "/C-D.txt"), 30000);
-        BufferedWriter bw_EF = new BufferedWriter(new FileWriter(postingDir_path + "/E-F.txt"), 30000);
-        BufferedWriter bw_GH = new BufferedWriter(new FileWriter(postingDir_path + "/G-H.txt"), 30000);
-        BufferedWriter bw_IJ = new BufferedWriter(new FileWriter(postingDir_path + "/I-J.txt"), 30000);
-        BufferedWriter bw_KL = new BufferedWriter(new FileWriter(postingDir_path + "/K-L.txt"), 30000);
-        BufferedWriter bw_MN = new BufferedWriter(new FileWriter(postingDir_path + "/M-N.txt"), 30000);
-        BufferedWriter bw_OP = new BufferedWriter(new FileWriter(postingDir_path + "/O-P.txt"), 30000);
-        BufferedWriter bw_QR = new BufferedWriter(new FileWriter(postingDir_path + "/Q-R.txt"), 30000);
-        BufferedWriter bw_ST = new BufferedWriter(new FileWriter(postingDir_path + "/S-T.txt"), 30000);
-        BufferedWriter bw_UV = new BufferedWriter(new FileWriter(postingDir_path + "/U-V.txt"), 30000);
-        BufferedWriter bw_WX = new BufferedWriter(new FileWriter(postingDir_path + "/W-X.txt"), 30000);
-        BufferedWriter bw_YZ = new BufferedWriter(new FileWriter(postingDir_path + "/Y-Z.txt"), 30000);
-        String curr_line = br.readLine();
-        String curr_term = "", prev_term;
-        int i$9=0, iAB=0, iCD=0, iEF=0, iGH=0, iIJ=0, iKL=0, iMN=0, iOP=0, iQR=0, iST=0, iUV=0, iWX=0, iYZ=0;
+        BufferedReader brLeft = new BufferedReader(new FileReader(left));
+        BufferedReader brRight = null;
+        if (right!=null) brRight = new BufferedReader(new FileReader(right));
+
+        BufferedWriter bw_$9 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/$-9.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_AB = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/A-B.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_CD = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/C-D.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_EF = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/E-F.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_GH = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/G-H.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_IJ = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/I-J.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_KL = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/K-L.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_MN = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/M-N.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_OP = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/O-P.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_QR = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/Q-R.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_ST = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/S-T.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_UV = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/U-V.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_WX = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/W-X.txt"), StandardCharsets.UTF_8), 30000);
+        BufferedWriter bw_YZ = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/Y-Z.txt"), StandardCharsets.UTF_8), 30000);
+
+        String leftLine = brLeft.readLine();
+        String rightLine = null;
+        if (brRight!=null)
+            rightLine = brRight.readLine();
         char first;
-        while (curr_line != null)
-        {
+        int i$9 = 0, iAB = 0, iCD = 0, iEF = 0, iGH = 0, iIJ = 0, iKL = 0, iMN = 0, iOP = 0, iQR = 0, iST = 0, iUV = 0, iWX = 0, iYZ = 0;
+        String leftTerm, rightTerm, curr_term = null, curr_line = null, prev_term = null;
+        boolean leftChosen;
+
+        while (leftLine!= null || rightLine!=null) {
+            // get just the terms value
+            leftTerm = leftLine!=null ? leftLine.substring(0, leftLine.indexOf(" | ")) : null;
+            rightTerm = rightLine!=null ? rightLine.substring(0, rightLine.indexOf(" | ")) : null;
+            //compare the terms
+            if (leftTerm!=null && rightTerm!=null) {
+                if (leftTerm.compareToIgnoreCase(rightTerm) < 0) {
+                    curr_line = leftLine;
+                    leftChosen = true;
+                } else {
+                    curr_line = rightLine;
+                    leftChosen = false;
+                }
+            } else if (leftTerm!=null && rightTerm==null) {
+                curr_line = leftLine;
+                leftChosen = true;
+            } else {
+                curr_line = rightLine;
+                leftChosen = false;
+            }
             prev_term = curr_term;
-            curr_term = curr_line.substring(0, curr_line.indexOf(" | docId="));
+            curr_term = curr_line.substring(0, curr_line.indexOf(" | "));
             first = curr_line.charAt(0);
-            if (first < 65 || (first > 90 && first < 97) || first > 122)
-            {
+
+            if (first < 65 || (first > 90 && first < 97) || first > 122) {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(i$9);
                 i$9++;
                 bw_$9.write(curr_line);
@@ -394,10 +437,14 @@ public class Indexer {
                 bw_YZ.write(curr_line);
                 bw_YZ.newLine();
             }
-            curr_line = br.readLine();
+
+            // read new line
+            if (leftChosen) leftLine = brLeft.readLine();
+            else rightLine = brRight.readLine();
         }
         // close all
-        br.close();
+        brLeft.close();
+        if (brRight!=null) brRight.close();
         bw_$9.close();
         bw_AB.close();
         bw_CD.close();
