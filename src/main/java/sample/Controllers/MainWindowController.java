@@ -1,5 +1,6 @@
 package sample.Controllers;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -71,6 +72,11 @@ public class MainWindowController implements Initializable
     public CheckBox chbx_stemming;
     public ImageView imageView_logo;
     public MenuButton m_languages;
+    public Button btn_run;
+    public TextArea txt_queryEntry;
+    public TextField txt_queryPath;
+    public Button btn_browseQuery;
+    public MenuButton menu_cities;
 
     @FXML
     public void initDataSet()
@@ -79,7 +85,8 @@ public class MainWindowController implements Initializable
             showAlert();
             return;
         }
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing... ()()");
+        //Platform.runLater(() -> new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...").show());
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...");
         alert.show();
         startTime = System.currentTimeMillis();
         readFile = new ReadFile(corpus_path);
@@ -100,7 +107,6 @@ public class MainWindowController implements Initializable
         try { FileUtils.deleteDirectory(new File(postings_path+"/Temporary Postings")); } // delete all temporary files
         catch (IOException e) { e.printStackTrace(); }
         endTime = System.currentTimeMillis();
-        alert.close();
         displaySummary();
     }
 
@@ -112,7 +118,8 @@ public class MainWindowController implements Initializable
     public void openFileExplorer(ActionEvent actionEvent)
     {
         DirectoryChooser dc = new DirectoryChooser();
-        dc.setInitialDirectory(new File("D:\\documents\\users\\benivre\\Downloads"));
+        //dc.setInitialDirectory(new File("D:\\documents\\users\\benivre\\Downloads"));
+        dc.setInitialDirectory(new File("C:\\Users\\user\\Desktop\\Engine misc"));
 
         File selectedDir = dc.showDialog(vBox_mainWindows.getScene().getWindow());
         if (actionEvent.getSource().equals(btn_corpus_browse) && selectedDir!=null)
@@ -169,11 +176,8 @@ public class MainWindowController implements Initializable
         try {
             Stage d_window = new Stage();
             d_window.setTitle("Dictionary");
-            String dic_path;
-            if (this.toStem)
-                dic_path = postings_path + "\\dictionary_stemmer.txt";
-            else
-                dic_path = postings_path + "\\dictionary.txt";
+            String dic_path =
+                    this.toStem ? postings_path + "\\dictionary_stemmer.txt" : postings_path + "\\dictionary.txt";
 
             Collection<DictionaryRecord> list = indexer.getDictionary().values();
             ObservableList<DictionaryRecord> details = FXCollections.observableArrayList(list);
@@ -248,5 +252,28 @@ public class MainWindowController implements Initializable
                             "Time(sec): " + ((double)(endTime - startTime)/1000) + " sec."
         );
         alert.showAndWait();
+    }
+
+    /**
+     * display the user a list of cities from the documents in the corpus.
+     */
+    public void displayCities()
+    {
+        if (readFile == null) return;
+
+    }
+
+    /**
+     * run the query from the text area which the user had typed in.
+     */
+    public void runQuery() {
+
+    }
+
+    /**
+     * run the query from the file in the path the user had entered.
+     */
+    public void runQueryFromFile() {
+
     }
 }

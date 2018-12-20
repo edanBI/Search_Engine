@@ -4,6 +4,7 @@ public class Document {
     private String doc_id;
     private int max_tf;
     private int unique_words;
+    private int length;
 
     public Document(String doc_id, int max_tf, int unique_words) {
         this.doc_id = doc_id;

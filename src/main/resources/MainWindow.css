@@ -13,8 +13,25 @@
     -fx-color: white;
 }
 
+.menu-button {
+    -fx-border-color: black;
+    -fx-background-color: whitesmoke;
+    -fx-text-align: left;
+}
+
+.menu-button:hover {
+    -fx-background-color: lightsteelblue;
+    -fx-color: white;
+}
+
 .text-field:disabled {
     -fx-border-color: black;
     -fx-text-inner-color: crimson;
+    -fx-opacity: 1.0;
+}
+
+.text-area {
+    -fx-border-color: black;
+    /*-fx-text-inner-color: crimson;*/
     -fx-opacity: 1.0;
 }
