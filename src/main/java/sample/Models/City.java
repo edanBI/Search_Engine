@@ -16,11 +16,13 @@ public class City {
     //that in the rest Countries API
     private static HashMap<String, String> restCountriesAPI = new HashMap<>();
     private String country;
+    private String city;
     private String currency;
     private String population;
     private LinkedList<String> docsRepresent;
 
     public City(String city, String initDocId) {
+        this.city = city;
         docsRepresent = new LinkedList<>();
         docsRepresent.addFirst(initDocId);
         infoByCity(city);
@@ -32,6 +34,10 @@ public class City {
      */
     void addDocId(String id) {
         this.docsRepresent.addLast(id);
+    }
+
+    public String getCity() {
+        return city;
     }
 
     LinkedList<String> getDocsRepresent() {

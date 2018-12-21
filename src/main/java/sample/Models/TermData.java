@@ -20,6 +20,32 @@ public class TermData {
         this.place.append(","+Integer.toString(firstIndex));
     }
 
+    //NEW IDANW
+    public TermData(int tF, String place) {
+        this.isImportant = doesImportant(place);
+        this.tF = tF;
+        this.place = new StringBuilder(place);
+    }
+
+    //NEW IDANW
+    public Boolean doesImportant(String place){
+        boolean important;
+        if (place.contains(",")) {
+            String isImportant = place.substring(0, place.indexOf(",")).trim();
+            if(Integer.parseInt(isImportant)<30)
+                important = true;
+            else
+                important = false;
+        }
+        else{
+            if(Integer.parseInt(place)<30)
+                important = true;
+            else
+                important = false;
+        }
+        return important;
+    }
+
     public int gettF() {
         return tF;
     }

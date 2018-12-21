@@ -49,7 +49,7 @@ public class Parser {
             int index = -1;
             boolean toStem = false;
 
-            if (stopWords.contains(current.trim()) && !current.trim().equals("between")) {
+            if (stopWords.contains(current.trim().toLowerCase()) && !current.trim().equals("between")) {
                 i++;
                 continue;
             }
@@ -388,16 +388,15 @@ public class Parser {
 
             //if the current word is not any rule then fill it in as a word and check uppercase and lowercase rules
             String termToDic = "";
-            if (termBuild.toString().isEmpty() || toStem==true) {
+            if (termBuild.toString().isEmpty() || toStem == true) {
                 if (this.stmr) {
                     if (termBuild.length() == 0)
                         termToDic = stemmer.stemTerm(this.stmr, current);
                     else
                         termToDic = stemmer.stemTerm(this.stmr, termBuild.toString());
-                }
-                else if (termBuild.toString().isEmpty()) termToDic = current;
+                } else if (termBuild.toString().isEmpty()) termToDic = current;
                 else termToDic = termBuild.toString();
-                termBuild.delete(0,termBuild.length());
+                termBuild.delete(0, termBuild.length());
                 if (dictionary.containsKey(termToDic.toLowerCase())) {//The term already in the dictionary in lowercase
                     termBuild.append(termToDic.toLowerCase());
                     index = i;
@@ -412,7 +411,7 @@ public class Parser {
                         boolean isImportant = dictionary.get(termToDic.toUpperCase()).getImportant();
                         String place = dictionary.get(termToDic.toUpperCase()).getPlaces();
                         dictionary.remove(termToDic.toUpperCase());
-                        dictionary.put(termToDic.toLowerCase(), new TermData(isImportant, tf, place, index));
+                        dictionary.put(termToDic.toLowerCase(), new TermData(isImportant, tf, place, i));
                         i++;
                         //tokenized
                         continue;
@@ -457,10 +456,10 @@ public class Parser {
                     || (s == '%' && !isNumber(str.toString()))
                     || (s == '/' && text.length() > i + 1 && !slash(str.toString(), text.charAt(i + 1)))
                     || (s == '\'' && text.length() > i + 1 && !apostrophe(str.toString(), text.charAt(i + 1)))
-                    || (s == '$' && text.length() > i + 1 && !((text.charAt(i-1)==' '||text.charAt(i-1)=='-') && Character.isDigit(text.charAt(i + 1))))
+                    || (s == '$' && text.length() > i + 1 && !((text.charAt(i - 1) == ' ' || text.charAt(i - 1) == '-') && Character.isDigit(text.charAt(i + 1))))
                     || (s == '-' && text.length() > i + 1 && !dash(str.toString(), text.charAt(i + 1)))
                     || (s == '.' && text.length() > i + 1 && !dot(str.toString(), text.charAt(i + 1)))
-                    || (s == ',' && (str.length()==0 || text.length() > i + 3 && !(Character.isDigit(text.charAt(i - 1)) && Character.isDigit(text.charAt(i + 1)) && Character.isDigit(text.charAt(i + 2)) && Character.isDigit(text.charAt(i + 3)))))) {
+                    || (s == ',' && (str.length() == 0 || text.length() > i + 3 && !(Character.isDigit(text.charAt(i - 1)) && Character.isDigit(text.charAt(i + 1)) && Character.isDigit(text.charAt(i + 2)) && Character.isDigit(text.charAt(i + 3)))))) {
                 if (str.length() > 0) {
                     myList.add(str.toString());
                     str.delete(0, str.capacity());
@@ -487,7 +486,7 @@ public class Parser {
             dic.get(token).settF(dic.get(token).gettF() + 1);
             dic.get(token).setPlace(index);
         } else
-            dic.put(token, new TermData(isImportant, 1,index));
+            dic.put(token, new TermData(isImportant, 1, index));
     }
 
     /**
@@ -560,23 +559,21 @@ public class Parser {
         while (stringBuilder.toString().contains(","))
             stringBuilder.deleteCharAt(stringBuilder.indexOf(","));
         double num = Double.parseDouble(stringBuilder.toString());
-        stringBuilder.delete(0,stringBuilder.length());
-        if (num < 1000){
+        stringBuilder.delete(0, stringBuilder.length());
+        if (num < 1000) {
             return number;
-        }
-        else if (num < 1000000) {
+        } else if (num < 1000000) {
             num /= 1000;
             stringBuilder.append(num + "K");
-        }
-        else if (num < 1000000000) {
+        } else if (num < 1000000000) {
             num /= 1000000;
-            stringBuilder.append(num + "M");;
+            stringBuilder.append(num + "M");
         } else {
             num /= 1000000000;
             stringBuilder.append(num + "B");
         }
-        if (stringBuilder.toString().substring(stringBuilder.toString().indexOf("."), stringBuilder.toString().length()-1).equals(".0")){
-            stringBuilder.delete(stringBuilder.toString().length()-3,stringBuilder.toString().length()-1);
+        if (stringBuilder.toString().substring(stringBuilder.toString().indexOf("."), stringBuilder.toString().length() - 1).equals(".0")) {
+            stringBuilder.delete(stringBuilder.toString().length() - 3, stringBuilder.toString().length() - 1);
         }
         return stringBuilder.toString();
     }
@@ -653,7 +650,7 @@ public class Parser {
         if ((str.toUpperCase().equals("A") || str.toUpperCase().equals("P")) && c.toString().toUpperCase().equals("M"))
             return true;
         if ((str.toUpperCase().equals("A.M") || str.toUpperCase().equals("P.M")) && c == ' ') return true;
-        if (str.toUpperCase().equals("ST") && ( c==' ' || c.toString().toUpperCase().contains("P"))) return true;
+        if (str.toUpperCase().equals("ST") && (c == ' ' || c.toString().toUpperCase().contains("P"))) return true;
 
         if (!Character.isDigit(c))
             return false;
@@ -686,7 +683,7 @@ public class Parser {
     }
 
     /**
-     *initialize the months
+     * initialize the months
      */
     private void initMonths() {
         months.put("JAN", 1);
