@@ -80,18 +80,11 @@
             </children>
         </VBox>
         <AnchorPane prefHeight="200.0" prefWidth="200.0">
-            <children>
-                <Button fx:id="btn_run" layoutX="678.0" layoutY="29.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="65.0" text="Run" />
-                <TextArea fx:id="txt_queryEntry" layoutX="14.0" layoutY="13.0" prefHeight="64.0" prefWidth="649.0" />
-                <TextField fx:id="txt_queryPath" disable="true" layoutX="14.0" layoutY="85.0" prefHeight="31.0" prefWidth="649.0" />
-                <Button fx:id="btn_browseQuery" layoutX="678.0" layoutY="88.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="65.0" text="Browse" />
-                <MenuButton fx:id="menu_cities" alignment="CENTER" layoutX="14.0" layoutY="137.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="150.0" text="Cities" textAlignment="CENTER">
-                    <items>
-                        <MenuItem mnemonicParsing="false" text="Action 1" />
-                        <MenuItem mnemonicParsing="false" text="Action 2" />
-                    </items>
-                </MenuButton>
-            </children>
+            <Button fx:id="btn_run" layoutX="678.0" layoutY="29.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="65.0" text="Run" />
+            <TextArea fx:id="txt_queryEntry" layoutX="14.0" layoutY="13.0" prefHeight="64.0" prefWidth="649.0" />
+            <TextField fx:id="txt_queryPath" disable="true" layoutX="14.0" layoutY="85.0" prefHeight="31.0" prefWidth="649.0" />
+            <Button fx:id="btn_browseQuery" layoutX="678.0" layoutY="88.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="65.0" text="Browse" />
+            <Button fx:id="btn_cities" onMouseClicked="#displayCities" layoutX="14.0" layoutY="152.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="161.0" text="Choose Cities" />
         </AnchorPane>
     </children>
 </VBox>

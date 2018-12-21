@@ -48,11 +48,26 @@ public class Indexer {
         Set<String> terms = d_args.keySet();
         numDocsCached++;
         numDocsIndexed++;
+
+        // update documents set
+        if (docsSet.containsKey(docId)) {
+            CityDocument tmp = (CityDocument) docsSet.get(docId);
+            tmp.setMax_tf(max_tf);
+            tmp.setUnique_words(d_args.size());
+        } else {// adds the current document to the documents hashset.
+            docsSet.put(docId, new Document(docId, max_tf, d_args.size()));
+        }
+
+        // index each term in the document
         for (String t : terms)
         {
+            // update the document length
+            docsSet.get(docId).updateLength(d_args.get(t).gettF());
+
             if (d_args.get(t).gettF() > max_tf)
                 max_tf = d_args.get(t).gettF();
-            //checks whether the term is already inside the dictionary, else add it
+
+            // checks whether the term is already inside the dictionary, else add it
             DictionaryRecord tmp;
             if (dictionary.containsKey(t))
             {
@@ -78,13 +93,6 @@ public class Indexer {
                 tmpPosting.put(t, new LinkedList<>());
                 tmpPosting.get(t).add(new PostingRecord(docId, d_args.get(t).gettF(), d_args.get(t).getPlaces()));
             }
-        }
-        if (docsSet.containsKey(docId)) {
-            CityDocument tmp = (CityDocument) docsSet.get(docId);
-            tmp.setMax_tf(max_tf);
-            tmp.setUnique_words(d_args.size());
-        } else {// adds the current document to the documents hashset.
-            docsSet.put(docId, new Document(docId, max_tf, d_args.size()));
         }
 
         if (numDocsCached == cachedDocsLimit)
@@ -368,8 +376,8 @@ public class Indexer {
             first = curr_line.charAt(0);
 
             if (first < 65 || (first > 90 && first < 97) || first > 122) {
-                if (dictionary.get(curr_line)==null)
-                    System.out.println(curr_line);
+                /*if (dictionary.get(curr_line)==null)
+                    System.out.println(curr_line);*/
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(i$9);
                 i$9++;
                 bw_$9.write(curr_line);

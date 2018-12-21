@@ -28,8 +28,7 @@ public class City {
 
     /**
      * add a new DOC ID that represent by the city
-     *
-     * @param id
+     * @param id is the document id
      */
     void addDocId(String id) {
         this.docsRepresent.addLast(id);

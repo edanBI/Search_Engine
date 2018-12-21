@@ -10,6 +10,7 @@ public class Document {
         this.doc_id = doc_id;
         this.max_tf = max_tf;
         this.unique_words = unique_words;
+        this.length = 0;
     }
 
     String getDoc_id() {
@@ -24,11 +25,15 @@ public class Document {
         return unique_words;
     }
 
-    public void setMax_tf(int max_tf) {
+    void updateLength(int val) {
+        this.length += val;
+    }
+
+    void setMax_tf(int max_tf) {
         this.max_tf = max_tf;
     }
 
-    public void setUnique_words(int unique_words) {
+    void setUnique_words(int unique_words) {
         this.unique_words = unique_words;
     }
 }

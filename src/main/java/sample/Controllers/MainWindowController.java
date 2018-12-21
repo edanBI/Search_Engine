@@ -2,6 +2,7 @@ package sample.Controllers;
 
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
+import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -14,6 +15,8 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.Stage;
 import org.apache.commons.io.FileUtils;
+import org.controlsfx.control.CheckComboBox;
+import org.controlsfx.control.CheckListView;
 import sample.Models.*;
 import java.io.File;
 import java.io.IOException;
@@ -30,6 +33,7 @@ public class MainWindowController implements Initializable
     private String corpus_path, postings_path;
     private Indexer indexer;
     private ReadFile readFile;
+    private HashSet<City> hs_citiesSelected;
 
     public MainWindowController() { toStem = false; }
 
@@ -76,7 +80,7 @@ public class MainWindowController implements Initializable
     public TextArea txt_queryEntry;
     public TextField txt_queryPath;
     public Button btn_browseQuery;
-    public MenuButton menu_cities;
+    public Button btn_cities;
 
     @FXML
     public void initDataSet()
@@ -107,6 +111,7 @@ public class MainWindowController implements Initializable
         try { FileUtils.deleteDirectory(new File(postings_path+"/Temporary Postings")); } // delete all temporary files
         catch (IOException e) { e.printStackTrace(); }
         endTime = System.currentTimeMillis();
+        alert.close();
         displaySummary();
     }
 
@@ -259,8 +264,30 @@ public class MainWindowController implements Initializable
      */
     public void displayCities()
     {
-        if (readFile == null) return;
+        if (readFile == null)
+            return;
 
+        Set<String> cities = readFile.getAllDocsCity().keySet();
+        ObservableList<String> list = FXCollections.observableArrayList();
+        list.addAll(cities);
+        list = list.sorted();
+
+        Stage window = new Stage();
+        CheckListView<String> checkListView = new CheckListView<>(list);
+        checkListView.getCheckModel().getCheckedItems().addListener(new ListChangeListener<String>() {
+            public void onChanged(ListChangeListener.Change<? extends String> c) {
+                hs_citiesSelected = new HashSet<>();
+                ObservableList<String> selected = checkListView.getCheckModel().getCheckedItems();
+                for (String city : selected) {
+                    hs_citiesSelected.add(readFile.getAllDocsCity().get(city));
+                }
+            }
+        });
+
+        ScrollPane scrollPane = new ScrollPane(checkListView);
+        Scene layout = new Scene(scrollPane);
+        window.setScene(layout);
+        window.show();
     }
 
     /**
