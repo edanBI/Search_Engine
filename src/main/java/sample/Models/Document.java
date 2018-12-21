@@ -25,6 +25,10 @@ public class Document {
         return unique_words;
     }
 
+    public int getLength() {
+        return length;
+    }
+
     void updateLength(int val) {
         this.length += val;
     }
