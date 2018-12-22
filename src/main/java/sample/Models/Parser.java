@@ -30,7 +30,9 @@ public class Parser {
             String st;
             while ((st = br.readLine()) != null)
                 this.stopWords.add(st.trim());
-        } catch (IOException e) { e.getStackTrace(); }
+        } catch (IOException e) {
+            e.getStackTrace();
+        }
     }
 
     /**

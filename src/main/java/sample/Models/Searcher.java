@@ -4,20 +4,18 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class Searcher {
     private Parser parser;
     private Indexer indexer;
-    //private Ranker ranker;
+    private Ranker ranker;
     private String pathOfPosthingFolder;
     private HashMap<Character, String> postingFiles = new HashMap<>();
 
-    public Searcher(Parser parser, Indexer indexer/*, Ranker ranker*/, String pathOfPosthingFolder) {
+    public Searcher(Parser parser, Indexer indexer, Ranker ranker, String pathOfPosthingFolder) {
         this.parser = parser;
         this.indexer = indexer;
         // this.ranker = ranker;
@@ -25,6 +23,7 @@ public class Searcher {
         initpostingFiles(postingFiles);
     }
 
+    //Finds the relevant documents for the given query
     public ArrayList<sample.Models.Document> parseFromQuery(String query, HashSet<City> cities) {
         HashSet<String> docsByCities = docsByCities(cities);
         //HashMap for all the terms by docs (K- docId, V- term name ,TermData)
@@ -73,17 +72,37 @@ public class Searcher {
         //something that sended to ranker
     }
 
+    //Finds the relevant documents for each query in the query file and write the result to the disk
     public void parseFromQueryFile(String path, HashSet<City> cities) {
         HashMap<String, String> readQueryFile = readQueryFile(path);
+        ArrayList<String> ans = new ArrayList<>();
         for (String query:readQueryFile.keySet()) {
             ArrayList<sample.Models.Document> docs = parseFromQuery(readQueryFile.get(query),cities);
             //send to write to file function format:" query + " 0 " + DocNum +" " + relevanc 1/0 + " 42.38 mt"
-            writeQueryResultToFile(query,docs);
+            for (sample.Models.Document document: docs) {
+                ans.add(query + " 0 " + document.getDoc_id() /* + " " + relevance */ + " 42.38 mt");
+            }
         }
+        writeQueryResultToFile(ans);
     }
 
-    public void writeQueryResultToFile(String queryId, ArrayList<sample.Models.Document> docId){
-
+    //Write the query result file to disk
+    public void writeQueryResultToFile(ArrayList<String> toPrint) {
+        try {
+            File query_file = new File(pathOfPosthingFolder + "/qrels.txt");
+            BufferedWriter br = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(query_file), StandardCharsets.UTF_8));
+            toPrint.forEach((s) -> {
+                try {
+                    br.write(s);
+                    br.newLine();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            });
+            br.close();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
     //Read the query file and split it to query number and the query
