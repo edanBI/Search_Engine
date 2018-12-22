@@ -12,14 +12,14 @@ public class Searcher {
     private Parser parser;
     private Indexer indexer;
     private Ranker ranker;
-    private String pathOfPosthingFolder;
+    private String pathOfPostingFolder;
     private HashMap<Character, String> postingFiles = new HashMap<>();
 
     public Searcher(Parser parser, Indexer indexer, Ranker ranker, String pathOfPosthingFolder) {
         this.parser = parser;
         this.indexer = indexer;
         // this.ranker = ranker;
-        this.pathOfPosthingFolder = pathOfPosthingFolder;
+        this.pathOfPostingFolder = pathOfPosthingFolder;
         initpostingFiles(postingFiles);
     }
 
@@ -45,7 +45,7 @@ public class Searcher {
                 //double idf = indexer.getDictionary().ceilingEntry(term).getValue().getIdf();
 
                 //all the lines of the term from the posting file
-                HashSet<String> allLineFromPostingFiles = postingLines(this.pathOfPosthingFolder, pointer, df, termToAdd);
+                HashSet<String> allLineFromPostingFiles = postingLines(pointer, df, termToAdd);
 
                 if (!allLineFromPostingFiles.isEmpty()) {
                     for (String line : allLineFromPostingFiles) {
@@ -89,7 +89,7 @@ public class Searcher {
     //Write the query result file to disk
     public void writeQueryResultToFile(ArrayList<String> toPrint) {
         try {
-            File query_file = new File(pathOfPosthingFolder + "/qrels.txt");
+            File query_file = new File(pathOfPostingFolder + "/qrels.txt");
             BufferedWriter br = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(query_file), StandardCharsets.UTF_8));
             toPrint.forEach((s) -> {
                 try {
@@ -135,14 +135,14 @@ public class Searcher {
     }
 
     //Return specific lines from the posting file
-    private HashSet<String> postingLines(String postings_path, int firstLine, int numOfLines, String firstWordCharacter) {
-        String fileName;
+    private HashSet<String> postingLines(int firstLine, int numOfLines, String firstWordCharacter) {
+        String filePath;
         if (Character.isLetter(firstWordCharacter.charAt(0)))
-            fileName = postingFiles.get(firstWordCharacter.toUpperCase().charAt(0));
-        else fileName = "$-9.txt";
+            filePath = pathOfPostingFolder + "/Posting Files/" + postingFiles.get(firstWordCharacter.toUpperCase().charAt(0));
+        else filePath = pathOfPostingFolder + "/Posting Files/$-9.txt";
 
         HashSet<String> allHisLines = new HashSet<String>();
-        try (BufferedReader br = new BufferedReader(new FileReader(postings_path + "/Posting Files/" + fileName))) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             for (int i = 0; i < firstLine; i++)
                 br.readLine();
             for (int i = 0; i < numOfLines; i++)
@@ -164,7 +164,7 @@ public class Searcher {
             if (indexer.getDictionary().containsKey(c.getCity())) {
                 int pointer = indexer.getDictionary().ceilingEntry(c.getCity()).getValue().getPtr();
                 int df = indexer.getDictionary().ceilingEntry(c.getCity()).getValue().getDF();
-                HashSet<String> allLineFromPostingFiles = postingLines(this.pathOfPosthingFolder, pointer, df, c.getCity());
+                HashSet<String> allLineFromPostingFiles = postingLines(pointer, df, c.getCity());
                 for (String line : allLineFromPostingFiles) {
                     docs.add(line.substring(line.indexOf("| docId=") + 8, line.indexOf(", tf=")));
                 }
