@@ -141,7 +141,7 @@ public class Searcher {
             filePath = pathOfPostingFolder + "/Posting Files/" + postingFiles.get(firstWordCharacter.toUpperCase().charAt(0));
         else filePath = pathOfPostingFolder + "/Posting Files/$-9.txt";
 
-        HashSet<String> allHisLines = new HashSet<String>();
+        HashSet<String> allHisLines = new HashSet<>();
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             for (int i = 0; i < firstLine; i++)
                 br.readLine();
