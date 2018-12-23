@@ -1,12 +1,15 @@
 package sample.Models;
 
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
+
 public class Document {
     private String doc_id;
     private int max_tf;
     private int unique_words;
     private int length;
 
-    public Document(String doc_id, int max_tf, int unique_words) {
+    Document(String doc_id, int max_tf, int unique_words) {
         this.doc_id = doc_id;
         this.max_tf = max_tf;
         this.unique_words = unique_words;
@@ -17,6 +20,10 @@ public class Document {
         return doc_id;
     }
 
+    public StringProperty getPropertyDoc_id() {
+        return new SimpleStringProperty(doc_id);
+    }
+
     public int getMax_tf() {
         return max_tf;
     }
@@ -25,7 +32,7 @@ public class Document {
         return unique_words;
     }
 
-    public int getLength() {
+    int getLength() {
         return length;
     }
 
