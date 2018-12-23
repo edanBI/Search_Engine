@@ -74,7 +74,6 @@ public class Searcher {
                 }
             }
         }
-
         // return an arraylist containing the ranked documents by descending order of relevancy
         return ranker.rank(queryTerms, docsAndTerms);
     }
