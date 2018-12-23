@@ -15,12 +15,12 @@ public class Searcher {
     private String pathOfPosthingFolder;
     private HashMap<Character, String> postingFiles = new HashMap<>();
 
-    public Searcher(Parser parser, Indexer indexer, Ranker ranker, String pathOfPosthingFolder) {
+    public Searcher(Parser parser, Indexer indexer, Ranker ranker, String pathOfPostingFolder) {
         this.parser = parser;
         this.indexer = indexer;
-        // this.ranker = ranker;
-        this.pathOfPosthingFolder = pathOfPosthingFolder;
-        initpostingFiles(postingFiles);
+        this.ranker = ranker;
+        this.pathOfPosthingFolder = pathOfPostingFolder;
+        initPostingFiles(postingFiles);
     }
 
     //Finds the relevant documents for the given query
@@ -29,10 +29,11 @@ public class Searcher {
         //HashMap for all the terms by docs (K- docId, V- term name ,TermData)
         HashMap<String, HashMap<String, TermData>> docsAndTerms = new HashMap<>();
         //return all the Terms of the query, after parse
-        List<String> queryTerms = new ArrayList<String>(parser.Parsing(query).keySet());
+        List<String> queryTerms = new ArrayList<>(parser.Parsing(query).keySet());
         for (String term : queryTerms) {
             //check if the term is in the dictionary
-            if (indexer.getDictionary().containsKey(term) || indexer.getDictionary().containsKey(term.toUpperCase()) || indexer.getDictionary().containsKey(term.toLowerCase())) {
+            if (indexer.getDictionary().containsKey(term) || indexer.getDictionary().containsKey(term.toUpperCase()) ||
+                    indexer.getDictionary().containsKey(term.toLowerCase())) {
                 String termToAdd = term;
                 if (indexer.getDictionary().containsKey(term.toUpperCase()))
                     termToAdd = term.toUpperCase();
@@ -56,7 +57,7 @@ public class Searcher {
                             continue;
 
                         int tF = Integer.parseInt(line.substring(line.indexOf(", tf=") + 5, line.indexOf(", positions=")));
-                        String positions = line.substring(line.indexOf(", positions=") + 12, line.length()).trim();
+                        String positions = line.substring(line.indexOf(", positions=") + 12).trim();
                         //add to docsAndTerms
                         if (docsAndTerms.containsKey(docId)) {
                             docsAndTerms.get(docId).put(termToAdd, new TermData(tF, positions));
@@ -69,12 +70,14 @@ public class Searcher {
                 }
             }
         }
-        //something that sended to ranker
+
+        // return an arraylist containing the ranked documents by descending order of relevancy
+        return ranker.rank(queryTerms, docsAndTerms);
     }
 
     //Finds the relevant documents for each query in the query file and write the result to the disk
-    public void parseFromQueryFile(String path, HashSet<City> cities) {
-        HashMap<String, String> readQueryFile = readQueryFile(path);
+    public void parseFromQueryFile(File file, HashSet<City> cities) {
+        HashMap<String, String> readQueryFile = readQueryFile(file);
         ArrayList<String> ans = new ArrayList<>();
         for (String query:readQueryFile.keySet()) {
             ArrayList<sample.Models.Document> docs = parseFromQuery(readQueryFile.get(query),cities);
@@ -106,9 +109,8 @@ public class Searcher {
     }
 
     //Read the query file and split it to query number and the query
-    private HashMap<String, String> readQueryFile(String path) {
+    private HashMap<String, String> readQueryFile(File file) {
         HashMap<String, String> QueryById = new HashMap<>();
-        File file = new File(path);
         try {
             Document document = Jsoup.parse(file, "UTF-8");
             Elements docs = document.getElementsByTag("top");
@@ -176,7 +178,7 @@ public class Searcher {
     /**
      * initialize the postingFiles
      */
-    private void initpostingFiles(HashMap<Character, String> postingFiles) {
+    private void initPostingFiles(HashMap<Character, String> postingFiles) {
         postingFiles.put('A', "A-B.txt");
         postingFiles.put('B', "A-B.txt");
         postingFiles.put('C', "C-D.txt");

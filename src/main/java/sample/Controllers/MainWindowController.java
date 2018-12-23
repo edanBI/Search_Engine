@@ -13,6 +13,7 @@ import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.commons.io.FileUtils;
 import org.controlsfx.control.CheckComboBox;
@@ -30,10 +31,13 @@ public class MainWindowController implements Initializable
 {
     private boolean toStem;
     private long startTime, endTime;
-    private String corpus_path, postings_path;
-    private Indexer indexer;
-    private ReadFile readFile;
+    private String corpus_path, postings_path, queries_path;
     private HashSet<City> hs_citiesSelected;
+
+    private ReadFile readFile;
+    private Indexer indexer;
+    private Searcher searcher;
+    private Ranker ranker;
 
     public MainWindowController() { toStem = false; }
 
@@ -68,19 +72,20 @@ public class MainWindowController implements Initializable
 
     @FXML
     public VBox vBox_mainWindows;
-    public TextField txt_corpus_path;
-    public TextField txt_postings_path;
     public Button btn_corpus_browse;
     public Button btn_postings_browse;
     public Button btn_generate;
-    public CheckBox chbx_stemming;
-    public ImageView imageView_logo;
-    public MenuButton m_languages;
-    public Button btn_run;
-    public TextArea txt_queryEntry;
-    public TextField txt_queryPath;
     public Button btn_browseQuery;
     public Button btn_cities;
+    public Button btn_run;
+    public TextArea txt_queryEntry;
+    public TextField txt_corpus_path;
+    public TextField txt_postings_path;
+    public TextField txt_queryPath;
+    public CheckBox chbx_stemming;
+    public CheckBox chbx_semantic;
+    public ImageView imageView_logo;
+    public MenuButton m_languages;
 
     @FXML
     public void initDataSet()
@@ -89,7 +94,6 @@ public class MainWindowController implements Initializable
             showAlert();
             return;
         }
-        //Platform.runLater(() -> new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...").show());
         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...");
         alert.show();
         startTime = System.currentTimeMillis();
@@ -113,6 +117,10 @@ public class MainWindowController implements Initializable
         endTime = System.currentTimeMillis();
         alert.close();
         displaySummary();
+
+        // init for the search phase
+        ranker = new Ranker(indexer.getDictionary(), indexer.getDocsSet());
+        searcher = new Searcher(parser, indexer, ranker, postings_path);
     }
 
     /**
@@ -178,6 +186,10 @@ public class MainWindowController implements Initializable
     @FXML
     public void displayDictionary()
     {
+        if (indexer == null) {
+            new Alert(Alert.AlertType.ERROR, "Dictionary N/A").showAndWait();
+            return;
+        }
         try {
             Stage d_window = new Stage();
             d_window.setTitle("Dictionary");
@@ -264,8 +276,10 @@ public class MainWindowController implements Initializable
      */
     public void displayCities()
     {
-        if (readFile == null)
+        if (readFile == null) {
+            new Alert(Alert.AlertType.ERROR, "No Cities to display").showAndWait();
             return;
+        }
 
         Set<String> cities = readFile.getAllDocsCity().keySet();
         ObservableList<String> list = FXCollections.observableArrayList();
@@ -294,13 +308,50 @@ public class MainWindowController implements Initializable
      * run the query from the text area which the user had typed in.
      */
     public void runQuery() {
+        String query = txt_queryEntry.getText();
+        if (query.length() == 0) {
+            new Alert(Alert.AlertType.ERROR, "Please Enter Query").showAndWait();
+            return;
+        }
 
+        // display the retrieved documents in new stage
+        Stage window = new Stage();
+        window.setTitle("Retrieved Documents");
+
+        ObservableList<Document> retrievedDocumentsList = FXCollections.observableArrayList(searcher.parseFromQuery(query, hs_citiesSelected));
+
+        TableView<Document> tbl_documents = new TableView<>();
+        TableColumn<Document, String> col_ids = new TableColumn<>();
+        tbl_documents.setMinWidth(500.0);
+        tbl_documents.setMinHeight(802.0);
+        col_ids.setText("Document ID");
+        col_ids.setMinWidth(300.0);
+
+        tbl_documents.getColumns().add(col_ids);
+        col_ids.setCellValueFactory(data -> data.getValue().getPropertyDoc_id());
+        tbl_documents.setItems(retrievedDocumentsList);
+
+        ScrollPane scrollPane = new ScrollPane(tbl_documents);
+        scrollPane.setFitToWidth(true);
+        Scene scene = new Scene(scrollPane, 515, 705);
+        window.setScene(scene);
+        window.show();
     }
 
     /**
      * run the query from the file in the path the user had entered.
      */
     public void runQueryFromFile() {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().addAll(
+                new FileChooser.ExtensionFilter("TEXT files (*.txt)", "*.txt"),
+                new FileChooser.ExtensionFilter("All files (*)", "*")
+        );
+        File qFile = fileChooser.showOpenDialog(vBox_mainWindows.getScene().getWindow());
+        if (qFile!=null)
+            txt_queryPath.setText(qFile.getAbsolutePath());
 
+        // run the searcher on the query file
+        searcher.parseFromQueryFile(qFile, hs_citiesSelected);
     }
 }

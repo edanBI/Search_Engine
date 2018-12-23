@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Line?>
 
-<VBox prefHeight="644.0" prefWidth="744.0" xmlns="http://javafx.com/javafx/8.0.171" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controllers.MainWindowController">
+<VBox prefHeight="644.0" prefWidth="744.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controllers.MainWindowController">
     <children>
         <VBox fx:id="vBox_mainWindows" prefHeight="423.0" prefWidth="746.0">
             <children>
@@ -53,11 +53,7 @@
                                 <MenuItem mnemonicParsing="false" text="none" />
                             </items>
                         </MenuButton>
-                        <AnchorPane layoutX="2.0" layoutY="-4.0" prefHeight="13.0" prefWidth="744.0">
-                            <children>
-                                <Button fx:id="btn_generate" layoutX="213.0" layoutY="7.0" mnemonicParsing="false" onAction="#initDataSet" prefHeight="31.0" prefWidth="318.0" text="Generate Dictionary &amp; Posting" textAlignment="JUSTIFY" />
-                            </children>
-                        </AnchorPane>
+                          <Button fx:id="btn_generate" layoutX="238.0" layoutY="3.0" mnemonicParsing="false" onAction="#initDataSet" prefHeight="31.0" prefWidth="318.0" text="Generate Dictionary &amp; Posting" textAlignment="JUSTIFY" />
                     </children>
                 </AnchorPane>
                 <AnchorPane layoutX="10.0" layoutY="252.0" prefHeight="15.0" prefWidth="746.0" />
@@ -80,11 +76,12 @@
             </children>
         </VBox>
         <AnchorPane prefHeight="200.0" prefWidth="200.0">
-            <Button fx:id="btn_run" layoutX="678.0" layoutY="29.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="65.0" text="Run" />
+            <Button fx:id="btn_run" layoutX="671.0" layoutY="30.0" mnemonicParsing="false" onAction="#runQuery" prefHeight="31.0" prefWidth="79.0" text="Run" />
             <TextArea fx:id="txt_queryEntry" layoutX="14.0" layoutY="13.0" prefHeight="64.0" prefWidth="649.0" />
             <TextField fx:id="txt_queryPath" disable="true" layoutX="14.0" layoutY="85.0" prefHeight="31.0" prefWidth="649.0" />
-            <Button fx:id="btn_browseQuery" layoutX="678.0" layoutY="88.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="65.0" text="Browse" />
-            <Button fx:id="btn_cities" onMouseClicked="#displayCities" layoutX="14.0" layoutY="152.0" mnemonicParsing="false" prefHeight="25.0" prefWidth="161.0" text="Choose Cities" />
+            <Button fx:id="btn_browseQuery" onAction="#runQueryFromFile" layoutX="671.0" layoutY="85.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="79.0" text="Browse" />
+            <Button fx:id="btn_cities" layoutX="14.0" layoutY="152.0" mnemonicParsing="false" onMouseClicked="#displayCities" prefHeight="25.0" prefWidth="161.0" text="Choose Cities" />
+         <CheckBox fx:id="chbx_semantic" layoutX="243.0" layoutY="152.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="96.0" text="Semantic" />
         </AnchorPane>
     </children>
 </VBox>
