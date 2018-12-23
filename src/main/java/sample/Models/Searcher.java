@@ -5,6 +5,7 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 import java.io.*;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 
@@ -24,12 +25,15 @@ public class Searcher {
     }
 
     //Finds the relevant documents for the given query
-    public ArrayList<sample.Models.Document> parseFromQuery(String query, HashSet<City> cities) {
+    public ArrayList<sample.Models.Document> parseFromQuery(String query, HashSet<City> cities, boolean toSemanticTreatment) {
         HashSet<String> docsByCities = docsByCities(cities);
         //HashMap for all the terms by docs (K- docId, V- term name ,TermData)
         HashMap<String, HashMap<String, TermData>> docsAndTerms = new HashMap<>();
         //return all the Terms of the query, after parse
         List<String> queryTerms = new ArrayList<String>(parser.Parsing(query).keySet());
+        //add to the list words with a meaning similar for the given query
+        if (toSemanticTreatment && semanticTreatment(queryTerms) != null)
+            queryTerms.addAll(semanticTreatment(queryTerms));
         for (String term : queryTerms) {
             //check if the term is in the dictionary
             if (indexer.getDictionary().containsKey(term) || indexer.getDictionary().containsKey(term.toUpperCase()) || indexer.getDictionary().containsKey(term.toLowerCase())) {
@@ -73,21 +77,26 @@ public class Searcher {
     }
 
     //Finds the relevant documents for each query in the query file and write the result to the disk
-    public void parseFromQueryFile(String path, HashSet<City> cities) {
+    public void parseFromQueryFile(String path, HashSet<City> cities, boolean toSemanticTreatment) {
         HashMap<String, String> readQueryFile = readQueryFile(path);
         ArrayList<String> ans = new ArrayList<>();
-        for (String query:readQueryFile.keySet()) {
-            ArrayList<sample.Models.Document> docs = parseFromQuery(readQueryFile.get(query),cities);
+        int i = 0;
+        for (String query : readQueryFile.keySet()) {
+            ArrayList<sample.Models.Document> docs = parseFromQuery(readQueryFile.get(query), cities, toSemanticTreatment);
             //send to write to file function format:" query + " 0 " + DocNum +" " + relevanc 1/0 + " 42.38 mt"
-            for (sample.Models.Document document: docs) {
-                ans.add(query + " 0 " + document.getDoc_id() /* + " " + relevance */ + " 42.38 mt");
+            for (sample.Models.Document document : docs) {
+                if (i < 50)
+                    ans.add(query + " 0 " + document.getDoc_id() + " 1 42.38 mt");
+                else
+                    ans.add(query + " 0 " + document.getDoc_id() + " 0 42.38 mt");
+                i++;
             }
         }
         writeQueryResultToFile(ans);
     }
 
     //Write the query result file to disk
-    public void writeQueryResultToFile(ArrayList<String> toPrint) {
+    private void writeQueryResultToFile(ArrayList<String> toPrint) {
         try {
             File query_file = new File(pathOfPostingFolder + "/qrels.txt");
             BufferedWriter br = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(query_file), StandardCharsets.UTF_8));
@@ -155,7 +164,7 @@ public class Searcher {
 
     //Return all the docs that the cities the func get are in their "104" tag or in the text
     private HashSet<String> docsByCities(HashSet<City> cities) {
-        if (cities.isEmpty()){
+        if (cities.isEmpty()) {
             return null;
         }
         HashSet<String> docs = new HashSet<>();
@@ -171,6 +180,47 @@ public class Searcher {
             }
         }
         return docs;
+    }
+
+    //Find with Datamuse API words with a meaning similar for the given query
+    private List<String> semanticTreatment(List<String> queryWords) {
+        if (queryWords.isEmpty()) {
+            return null;
+        }
+        List<String> similarWord = new ArrayList<>();
+        StringBuilder query = new StringBuilder();
+        for (String s : queryWords) {
+            query.append(s + "+");
+        }
+        query.deleteCharAt(query.length() - 1);
+        String word;
+        int numOfWordToImport = 2 * queryWords.size();
+        if (numOfWordToImport > 100)
+            numOfWordToImport = 100;
+        else if (numOfWordToImport == 0)
+            return null;
+        StringBuilder stringBuilder = new StringBuilder();
+        try {
+            URL oracle1 = new URL("https://api.datamuse.com/words?ml=" + query);
+            String inputLine;
+            BufferedReader in = new BufferedReader(
+                    new InputStreamReader(oracle1.openStream()));
+            while ((inputLine = in.readLine()) != null)
+                stringBuilder.append(inputLine);
+            in.close();
+            if (stringBuilder.length() > 0) {
+                for (int i = 0; i < numOfWordToImport; i++) {
+                    word = stringBuilder.substring(stringBuilder.toString().indexOf("\"word\":\"") + 8, stringBuilder.toString().indexOf("\",\""));
+                    similarWord.add(word);
+                    stringBuilder.delete(0, stringBuilder.indexOf("},{\"word\":") + 3);
+                }
+                stringBuilder.delete(0, stringBuilder.length());
+            } else
+                return null;
+        } catch (IOException e1) {
+            e1.printStackTrace();
+        }
+        return similarWord;
     }
 
     /**
