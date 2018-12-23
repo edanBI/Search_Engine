@@ -8,6 +8,7 @@ public class Document {
     private int max_tf;
     private int unique_words;
     private int length;
+    private StringBuilder entities;
 
     Document(String doc_id, int max_tf, int unique_words) {
         this.doc_id = doc_id;
@@ -47,4 +48,9 @@ public class Document {
     void setUnique_words(int unique_words) {
         this.unique_words = unique_words;
     }
+
+    public void setEntities(String place) {
+        this.entities.append("," + place);
+    }
+
 }
