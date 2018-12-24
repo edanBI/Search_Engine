@@ -1,6 +1,5 @@
 package sample.Controllers;
 
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -16,30 +15,34 @@ import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import org.apache.commons.io.FileUtils;
-import org.controlsfx.control.CheckComboBox;
 import org.controlsfx.control.CheckListView;
 import sample.Models.*;
+
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class MainWindowController implements Initializable
 {
-    private boolean toStem;
+    private boolean toStem, toSemantic;
     private long startTime, endTime;
-    private String corpus_path, postings_path, queries_path;
+    private String corpus_path, postings_path, resQueries_path;
     private HashSet<City> hs_citiesSelected;
 
     private ReadFile readFile;
     private Indexer indexer;
     private Searcher searcher;
-    private Ranker ranker;
 
-    public MainWindowController() { toStem = false; }
+    private File qFile;
+
+    public MainWindowController()
+    {
+        toStem = false; toSemantic = false;
+
+    }
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
@@ -78,6 +81,7 @@ public class MainWindowController implements Initializable
     public Button btn_browseQuery;
     public Button btn_cities;
     public Button btn_run;
+    public Button btn_resPath;
     public TextArea txt_queryEntry;
     public TextField txt_corpus_path;
     public TextField txt_postings_path;
@@ -86,6 +90,7 @@ public class MainWindowController implements Initializable
     public CheckBox chbx_semantic;
     public ImageView imageView_logo;
     public MenuButton m_languages;
+    public Label lbl_resPath;
 
     @FXML
     public void initDataSet()
@@ -112,6 +117,8 @@ public class MainWindowController implements Initializable
         indexer.flushTmpPosting(); //clear all the remaining terms which haven't written to disk
         indexer.mergeTmpPostingFiles(toStem); // build final posting files
         indexer.writeDictionaryToDisk(toStem); // store all the dictionary in disk
+        indexer.writeDocumentsToDisk(); // store the documents in disk
+        readFile.writeCitiesToDisk(postings_path); // store the cities in disk
         try { FileUtils.deleteDirectory(new File(postings_path+"/Temporary Postings")); } // delete all temporary files
         catch (IOException e) { e.printStackTrace(); }
         endTime = System.currentTimeMillis();
@@ -119,7 +126,7 @@ public class MainWindowController implements Initializable
         displaySummary();
 
         // init for the search phase
-        ranker = new Ranker(indexer.getDictionary(), indexer.getDocsSet());
+        Ranker ranker = new Ranker(indexer.getDictionary(), indexer.getDocsSet());
         searcher = new Searcher(parser, indexer, ranker, postings_path);
     }
 
@@ -128,7 +135,7 @@ public class MainWindowController implements Initializable
      * @param actionEvent when one of the 'Browse' button is selected.
      */
     @FXML
-    public void openFileExplorer(ActionEvent actionEvent)
+    public void openDirectoryFileExplorer(ActionEvent actionEvent)
     {
         DirectoryChooser dc = new DirectoryChooser();
         //dc.setInitialDirectory(new File("D:\\documents\\users\\benivre\\Downloads"));
@@ -147,12 +154,22 @@ public class MainWindowController implements Initializable
             txt_postings_path.setText(selectedDir.getAbsolutePath());
             txt_postings_path.setDisable(true);
         }
+        else if (actionEvent.getSource().equals(btn_resPath) && selectedDir!=null) {
+            lbl_resPath.setText("  Results File Path: " + selectedDir.getAbsolutePath() + "\\qrels.txt");
+            resQueries_path = selectedDir.getAbsolutePath();
+        }
     }
 
     @FXML
     public void setToStem()
     {
         toStem = chbx_stemming.isSelected();
+    }
+
+    @FXML
+    public void setToSemantic()
+    {
+        toSemantic = chbx_semantic.isSelected();
     }
 
     @FXML
@@ -308,9 +325,27 @@ public class MainWindowController implements Initializable
      * run the query from the text area which the user had typed in.
      */
     public void runQuery() {
-        String query = txt_queryEntry.getText();
-        if (query.length() == 0) {
+        if (txt_queryEntry.getText().length()==0 && txt_queryPath.getText().length()==0) {
             new Alert(Alert.AlertType.ERROR, "Please Enter Query").showAndWait();
+            return;
+        }
+        if (txt_queryEntry.getText().length()>0 && txt_queryPath.getText().length()>0) {
+            new Alert(Alert.AlertType.ERROR, "Unable to run two queries. Please Choose only one!").showAndWait();
+            return;
+        }
+
+        // get the ranked documents
+        if (searcher == null) {
+            //searcher = new Searcher(new Parser(corpus_path, toStem), restoreDocuments(), res)
+        }
+        ObservableList<Document> retrievedDocumentsList;
+        if (txt_queryEntry.getText().length() > 0) {
+            retrievedDocumentsList = FXCollections.observableArrayList(searcher.parseFromQuery(txt_queryEntry.getText(), hs_citiesSelected, toSemantic));
+        } else {
+            if (resQueries_path != null)
+                searcher.parseFromQueryFile(qFile, hs_citiesSelected, toSemantic, resQueries_path);
+            else
+                searcher.parseFromQueryFile(qFile, hs_citiesSelected, toSemantic, "");
             return;
         }
 
@@ -318,15 +353,13 @@ public class MainWindowController implements Initializable
         Stage window = new Stage();
         window.setTitle("Retrieved Documents");
 
-        ObservableList<Document> retrievedDocumentsList = FXCollections.observableArrayList(searcher.parseFromQuery(query, hs_citiesSelected));
-
         TableView<Document> tbl_documents = new TableView<>();
         TableColumn<Document, String> col_ids = new TableColumn<>();
+
         tbl_documents.setMinWidth(500.0);
         tbl_documents.setMinHeight(802.0);
         col_ids.setText("Document ID");
         col_ids.setMinWidth(300.0);
-
         tbl_documents.getColumns().add(col_ids);
         col_ids.setCellValueFactory(data -> data.getValue().getPropertyDoc_id());
         tbl_documents.setItems(retrievedDocumentsList);
@@ -341,17 +374,58 @@ public class MainWindowController implements Initializable
     /**
      * run the query from the file in the path the user had entered.
      */
-    public void runQueryFromFile() {
+    public void browseQueryFile() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("TEXT files (*.txt)", "*.txt"),
                 new FileChooser.ExtensionFilter("All files (*)", "*")
         );
-        File qFile = fileChooser.showOpenDialog(vBox_mainWindows.getScene().getWindow());
-        if (qFile!=null)
+        qFile = fileChooser.showOpenDialog(vBox_mainWindows.getScene().getWindow());
+        if (qFile!=null) {
             txt_queryPath.setText(qFile.getAbsolutePath());
-
+        }
         // run the searcher on the query file
-        searcher.parseFromQueryFile(qFile, hs_citiesSelected);
+        //searcher.parseFromQueryFile(qFile, hs_citiesSelected, toSemantic);
+    }
+
+    private HashMap<String, Document> restoreDocuments() throws IOException
+    {
+        HashMap<String, Document> docSet = new HashMap<>();
+        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Documents.txt"));
+        String line, docId;
+        int max_tf, unique_words, length;
+        while ((line = br.readLine()) != null) {
+            docId = line.substring(7, line.indexOf(", max_tf="));
+            max_tf = Integer.parseInt(line.substring(line.indexOf(", max_tf=")+9, line.indexOf(", unique_words=")));
+            unique_words = Integer.parseInt(line.substring(line.indexOf(", unique_words=")+15, line.indexOf(", length=")));
+            length = Integer.parseInt(line.substring(line.indexOf(", length=")+9, line.indexOf(", entities=")));
+
+            docSet.put(docId, new Document(docId, max_tf, unique_words, length));
+            docSet.get(docId).setEntities( line.substring(line.indexOf(", entities=") + 11, line.lastIndexOf('}')));
+        }
+
+        return docSet;
+    }
+
+    private HashMap<String, City> restoreCities() throws IOException
+    {
+        HashMap<String, City> cities = new HashMap<>();
+        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Cities.txt"));
+        String line, city, country, currency, population, docs[];
+        LinkedList<String> list;
+
+        while ((line = br.readLine()) != null) {
+            city = line.substring(10, line.indexOf(", country='"));
+            country = line.substring(line.indexOf(", country='")+10, line.indexOf(", currency='"));
+            currency = line.substring(line.indexOf(", currency='")+11, line.indexOf(", population='"));
+            population = line.substring(line.indexOf(", population='")+13, line.indexOf(", docsRepresent="));
+
+            docs = line.substring(line.indexOf(", docsRepresent=")+17, line.length()-1).split(",");
+            list = new LinkedList<>(Arrays.asList(docs));
+
+            cities.put(city, new City(city, country, currency, population, list));
+        }
+
+        return cities;
     }
 }

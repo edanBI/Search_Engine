@@ -4,8 +4,11 @@
       <w>avgdl</w>
       <w>chbx</w>
       <w>currencycode</w>
+      <w>docno</w>
+      <w>geobytes</w>
       <w>hashset</w>
       <w>idf</w>
+      <w>qrels</w>
       <w>stmr</w>
       <w>tokenized</w>
       <w>vupdate</w>

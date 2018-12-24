@@ -16,8 +16,7 @@ public class Indexer {
     private int numUniqueTerms;
     private BufferedWriter bw_tmpPosting;
     private String postingDir;
-    //private final String tmpPostPath = "DB Files/Temporary Postings";
-    private String tmpPostPath;// = "src/main/resources/Temporary Postings"; //*******
+    private String tmpPostPath;
 
     private TreeMap<String, City> idxCities;
 
@@ -46,7 +45,7 @@ public class Indexer {
     {
         int max_tf = -1;
         Set<String> terms = d_args.keySet();
-        List<String> listOfEntitis = new ArrayList<>();
+        List<String> listOfEntities = new ArrayList<>();
         numDocsCached++;
         numDocsIndexed++;
 
@@ -84,8 +83,8 @@ public class Indexer {
             } else {
                 if (Character.isUpperCase(t.charAt(0))) {
                     dictionary.put(t, new DictionaryRecord(t, d_args.get(t).gettF(), true));
-                    // adds the uppercase term to the listOfEntitis
-                    listOfEntitis.add(t+"_"+d_args.get(t).gettF());
+                    // adds the uppercase term to the listOfEntities
+                    listOfEntities.add(t+"_"+d_args.get(t).gettF());
                 }
                 else
                     dictionary.put(t, new DictionaryRecord(t, d_args.get(t).gettF(), false));
@@ -98,8 +97,8 @@ public class Indexer {
                 tmpPosting.get(t).add(new PostingRecord(docId, d_args.get(t).gettF(), d_args.get(t).getPlaces()));
             }
         }
-        // set the listOfEntitis in this current document
-        docsSet.get(docId).setEntities(listOfEntitis);
+        // set the listOfEntities in this current document
+        docsSet.get(docId).setEntities(listOfEntities);
 
         if (numDocsCached == cachedDocsLimit)
         {
@@ -503,15 +502,6 @@ public class Indexer {
     }
 
     /**
-     * @param docId is the document id to find.
-     * @return the docId document object.
-     */
-    public Document getDocumentById(String docId)
-    {
-        return docsSet.get(docId);
-    }
-
-    /**
      * @return an arraylist containing the files names
      */
     private ArrayList<String> getFiles()
@@ -525,52 +515,42 @@ public class Indexer {
     }
 
     /**
-     * @return -1 if id1 is greater, 0 if equals or 1 if id2 is greater.
-     */
-    private int idCompare(String id1, String id2)
-    {
-        int id1_midIdx = -1;
-        int id2_midIdx = -1;
-        for (int i=0; i<id1.length(); i++)
-        {
-            if (Character.isDigit(id1.charAt(i))){
-                id1_midIdx = i;
-                break;
-            }
-        }
-        for (int i=0; i<id1.length(); i++)
-        {
-            if (Character.isDigit(id2.charAt(i))){
-                id2_midIdx = i;
-                break;
-            }
-        }
-        String initial1 = id1.substring(0, id1_midIdx);
-        String initial2 = id2.substring(0, id2_midIdx);
-        if (initial1.compareToIgnoreCase(initial2) < 0)
-            return -1;
-        else if (initial1.compareToIgnoreCase(initial2) == 0)
-        {
-            int mid1 = Integer.parseInt(id1.substring(id1_midIdx, id1.indexOf("-")));
-            int mid2 = Integer.parseInt(id2.substring(id2_midIdx, id2.indexOf("-")));
-            if (mid1 < mid2) return -1;
-            else if (mid1 == mid2)
-            {
-                int end1 = Integer.parseInt(id1.substring(id1.indexOf("-")+1));
-                int end2 = Integer.parseInt(id2.substring(id2.indexOf("-")+1));
-                if (end1 < end2) return -1;
-                else return 1;
-            } else return 1;
-
-        } else return 1;
-    }
-
-    /**
      * calculate all terms idf's
      */
     private void updateIDFs()
     {
         dictionary.forEach((t, record) -> record.setIdf(DoubleMath.log2((double) numDocsIndexed / (double) record.getDF())));
+    }
+
+    public void indexCities(HashMap<String, City> cities)
+    {
+        idxCities = new TreeMap<>(cities);
+        idxCities.forEach((name, city) -> city.getDocsRepresent().forEach(docid -> docsSet
+                .put(docid, new CityDocument(docid, -1, -1, city))));
+    }
+
+    public TreeMap<String, City> getIdxCities() {
+        return idxCities;
+    }
+
+    public TreeMap<String, DictionaryRecord> getDictionary() {
+        return dictionary;
+    }
+
+    /**
+     * write the document set to the disk. this is done for later use when retrieving docs
+     */
+    public void writeDocumentsToDisk()
+    {
+        try {
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(postingDir + "/ProgramData/Documents.txt"), StandardCharsets.UTF_8));
+            for (Document doc : docsSet.values()) {
+                bw.write(doc.toString());
+                bw.newLine();
+            }
+            bw.close();
+        } catch (IOException e) { e.printStackTrace(); }
     }
 
     /**
@@ -602,21 +582,6 @@ public class Indexer {
             curr = br.readLine();
             len=0;
         }
-        return dictionary;
-    }
-
-    public void indexCities(HashMap<String, City> cities)
-    {
-        idxCities = new TreeMap<>(cities);
-        idxCities.forEach((name, city) -> city.getDocsRepresent().forEach(docid -> docsSet
-                .put(docid, new CityDocument(docid, -1, -1, city))));
-    }
-
-    public TreeMap<String, City> getIdxCities() {
-        return idxCities;
-    }
-
-    public TreeMap<String, DictionaryRecord> getDictionary() {
         return dictionary;
     }
 }

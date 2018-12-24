@@ -79,7 +79,7 @@ public class Searcher {
     }
 
     //Finds the relevant documents for each query in the query file and write the result to the disk
-    public void parseFromQueryFile(File file, HashSet<City> cities, boolean toSemanticTreatment) {
+    public void parseFromQueryFile(File file, HashSet<City> cities, boolean toSemanticTreatment, String resPath) {
         HashMap<String, String> readQueryFile = readQueryFile(file);
         ArrayList<String> ans = new ArrayList<>();
         int i = 0;
@@ -94,13 +94,17 @@ public class Searcher {
                 i++;
             }
         }
-        writeQueryResultToFile(ans);
+        writeQueryResultToFile(ans, resPath);
     }
 
     //Write the query result file to disk
-    private void writeQueryResultToFile(ArrayList<String> toPrint) {
+    private void writeQueryResultToFile(ArrayList<String> toPrint, String resPath) {
         try {
-            File query_file = new File(pathOfPostingFolder + "/qrels.txt");
+            File query_file;
+            if (resPath.length() > 0)
+                query_file = new File(resPath);
+            else
+                query_file = new File(pathOfPostingFolder + "/qrels.txt");
             BufferedWriter br = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(query_file), StandardCharsets.UTF_8));
             toPrint.forEach((s) -> {
                 try {

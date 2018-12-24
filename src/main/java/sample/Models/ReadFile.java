@@ -4,12 +4,10 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
+
+import java.io.*;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 public class ReadFile {
     private String path;
@@ -43,9 +41,10 @@ public class ReadFile {
     /**
      * fill the listOfFilePath with all files in the corpus
      *
-     * @param path
+     * @param path .
      */
-    private void filesForFolder(String path) {
+    private void filesForFolder(String path)
+    {
         final File folder = new File(path);
         for (final File fileEntry : folder.listFiles()) {
             if (fileEntry.isDirectory()) {
@@ -58,13 +57,14 @@ public class ReadFile {
     }
 
     /**
-     * read file and spliting it documents
-     * also find thier ID and the represtnted languages and cities for each document
+     * read file and splitting it documents
+     * also find their ID and the represented languages and cities for each document
      *
-     * @param path
-     * @return
+     * @param path .
+     * @return .
      */
-    public HashMap<String, String> read(String path) {
+    public HashMap<String, String> read(String path)
+    {
         HashMap<String, String> textById = new HashMap<>();
         StringBuilder text = new StringBuilder();
         StringBuilder id = new StringBuilder();
@@ -162,5 +162,17 @@ public class ReadFile {
             e.getStackTrace();
         }
         return textById;
+    }
+
+    public void writeCitiesToDisk(String postingPath)
+    {
+        try{
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(postingPath + "/ProgramData/Cities.txt"), StandardCharsets.UTF_8));
+            for (Map.Entry<String, City> entry : allDocsCity.entrySet()) {
+                bw.write(entry.getKey() + " : " + entry.getValue().toString());
+                bw.newLine();
+            }
+        } catch (IOException e) { e.printStackTrace(); }
     }
 }

@@ -10,13 +10,20 @@ public class Document {
     private int max_tf;
     private int unique_words;
     private int length;
-    private StringBuilder entities;
+    private String entities;
 
     Document(String doc_id, int max_tf, int unique_words) {
         this.doc_id = doc_id;
         this.max_tf = max_tf;
         this.unique_words = unique_words;
         this.length = 0;
+    }
+
+    public Document(String doc_id, int max_tf, int unique_words, int length) {
+        this.doc_id = doc_id;
+        this.max_tf = max_tf;
+        this.unique_words = unique_words;
+        this.length = length;
     }
 
     String getDoc_id() {
@@ -52,7 +59,7 @@ public class Document {
     }
 
     public String[] getEntities() {
-        return this.entities.toString().split("@");
+        return this.entities.split("@");
     }
 
     void setEntities(List<String> list) {
@@ -74,6 +81,21 @@ public class Document {
         }
         if (stringBuilder != null && !stringBuilder.toString().isEmpty())
             stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-        this.entities = stringBuilder;
+        this.entities = stringBuilder.toString();
+    }
+
+    public void setEntities(String arg) {
+        entities = arg;
+    }
+
+    @Override
+    public String toString() {
+        return "Document{" +
+                "doc_id='" + doc_id +
+                ", max_tf=" + max_tf +
+                ", unique_words=" + unique_words +
+                ", length=" + length +
+                ", entities=" + entities.toString() +
+                '}';
     }
 }

@@ -16,7 +16,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.shape.Line?>
 
-<VBox prefHeight="644.0" prefWidth="744.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controllers.MainWindowController">
+<VBox prefHeight="733.0" prefWidth="761.0" xmlns="http://javafx.com/javafx/8.0.172-ea" xmlns:fx="http://javafx.com/fxml/1" fx:controller="sample.Controllers.MainWindowController">
     <children>
         <VBox fx:id="vBox_mainWindows" prefHeight="423.0" prefWidth="746.0">
             <children>
@@ -39,9 +39,9 @@
                     <children>
                         <Label fx:id="lbl_corpus_path" prefHeight="21.0" prefWidth="100.0" text="Corpus path:" GridPane.columnIndex="1" GridPane.halignment="CENTER" />
                         <TextField fx:id="txt_corpus_path" disable="true" GridPane.columnIndex="2" />
-                        <Button fx:id="btn_corpus_browse" mnemonicParsing="false" onAction="#openFileExplorer" prefHeight="31.0" prefWidth="85.0" text="Browse" GridPane.columnIndex="3" />
+                        <Button fx:id="btn_corpus_browse" mnemonicParsing="false" onAction="#openDirectoryFileExplorer" prefHeight="31.0" prefWidth="85.0" text="Browse" GridPane.columnIndex="3" />
                         <TextField fx:id="txt_postings_path" disable="true" layoutX="179.0" layoutY="68.0" GridPane.columnIndex="2" GridPane.rowIndex="1" />
-                        <Button fx:id="btn_postings_browse" layoutX="651.0" layoutY="68.0" mnemonicParsing="false" onAction="#openFileExplorer" prefHeight="31.0" prefWidth="86.0" text="Browse" GridPane.columnIndex="3" GridPane.rowIndex="1" />
+                        <Button fx:id="btn_postings_browse" layoutX="651.0" layoutY="68.0" mnemonicParsing="false" onAction="#openDirectoryFileExplorer" prefHeight="31.0" prefWidth="86.0" text="Browse" GridPane.columnIndex="3" GridPane.rowIndex="1" />
                         <Label fx:id="lbl_postings_path" prefHeight="32.0" prefWidth="102.0" text="Postings path:" GridPane.columnIndex="1" GridPane.rowIndex="1" />
                     </children>
                 </GridPane>
@@ -53,7 +53,7 @@
                                 <MenuItem mnemonicParsing="false" text="none" />
                             </items>
                         </MenuButton>
-                          <Button fx:id="btn_generate" layoutX="238.0" layoutY="3.0" mnemonicParsing="false" onAction="#initDataSet" prefHeight="31.0" prefWidth="318.0" text="Generate Dictionary &amp; Posting" textAlignment="JUSTIFY" />
+                        <Button fx:id="btn_generate" layoutX="238.0" layoutY="3.0" mnemonicParsing="false" onAction="#initDataSet" prefHeight="31.0" prefWidth="318.0" text="Generate Dictionary &amp; Posting" textAlignment="JUSTIFY" />
                     </children>
                 </AnchorPane>
                 <AnchorPane layoutX="10.0" layoutY="252.0" prefHeight="15.0" prefWidth="746.0" />
@@ -75,13 +75,15 @@
                 </AnchorPane>
             </children>
         </VBox>
-        <AnchorPane prefHeight="200.0" prefWidth="200.0">
-            <Button fx:id="btn_run" layoutX="671.0" layoutY="30.0" mnemonicParsing="false" onAction="#runQuery" prefHeight="31.0" prefWidth="79.0" text="Run" />
-            <TextArea fx:id="txt_queryEntry" layoutX="14.0" layoutY="13.0" prefHeight="64.0" prefWidth="649.0" />
-            <TextField fx:id="txt_queryPath" disable="true" layoutX="14.0" layoutY="85.0" prefHeight="31.0" prefWidth="649.0" />
-            <Button fx:id="btn_browseQuery" onAction="#runQueryFromFile" layoutX="671.0" layoutY="85.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="79.0" text="Browse" />
+        <AnchorPane prefHeight="313.0" prefWidth="761.0">
+            <Button fx:id="btn_run" layoutX="591.0" layoutY="149.0" mnemonicParsing="false" onAction="#runQuery" prefHeight="31.0" prefWidth="150.0" text="Run Run Run" />
+            <TextArea fx:id="txt_queryEntry" layoutX="14.0" layoutY="13.0" prefHeight="64.0" prefWidth="649.0" promptText="enter your query here..." />
+            <TextField fx:id="txt_queryPath" disable="true" layoutX="14.0" layoutY="85.0" prefHeight="31.0" prefWidth="649.0" promptText="browse queries file path" />
+            <Button fx:id="btn_browseQuery" layoutX="671.0" layoutY="85.0" mnemonicParsing="false" onAction="#browseQueryFile" prefHeight="31.0" prefWidth="79.0" text="Browse" />
             <Button fx:id="btn_cities" layoutX="14.0" layoutY="152.0" mnemonicParsing="false" onMouseClicked="#displayCities" prefHeight="25.0" prefWidth="161.0" text="Choose Cities" />
-         <CheckBox fx:id="chbx_semantic" layoutX="243.0" layoutY="152.0" mnemonicParsing="false" prefHeight="31.0" prefWidth="96.0" text="Semantic" />
+            <CheckBox fx:id="chbx_semantic" layoutX="243.0" layoutY="152.0" mnemonicParsing="false" onAction="#setToSemantic" prefHeight="31.0" prefWidth="96.0" text="Semantic" />
+            <Button fx:id="btn_resPath" layoutX="14.0" layoutY="221.0" mnemonicParsing="false" onAction="#openDirectoryFileExplorer" text="Set Result File Directory" />
+            <Label fx:id="lbl_resPath" layoutX="199.0" layoutY="226.0" prefHeight="21.0" prefWidth="412.0" />
         </AnchorPane>
     </children>
 </VBox>

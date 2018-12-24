@@ -15,46 +15,11 @@ public class City {
     //static HashMap that fill by all the cities as key and their value is string of country*population+currency
     //that in the rest Countries API
     private static HashMap<String, String> restCountriesAPI = new HashMap<>();
-    private String country;
     private String city;
+    private String country;
     private String currency;
     private String population;
     private LinkedList<String> docsRepresent;
-
-    public City(String city, String initDocId) {
-        this.city = city;
-        docsRepresent = new LinkedList<>();
-        docsRepresent.addFirst(initDocId);
-        infoByCity(city);
-    }
-
-    /**
-     * add a new DOC ID that represent by the city
-     * @param id is the document id
-     */
-    void addDocId(String id) {
-        this.docsRepresent.addLast(id);
-    }
-
-    public String getCity() {
-        return city;
-    }
-
-    LinkedList<String> getDocsRepresent() {
-        return docsRepresent;
-    }
-
-    public String getCountry() {
-        return country;
-    }
-
-    public String getCurrency() {
-        return currency;
-    }
-
-    public String getPopulation() {
-        return population;
-    }
 
     /*
     static block that fill the restCountriesAPI HashMap by values from the city1.txt file
@@ -80,10 +45,53 @@ public class City {
         }
     }
 
+    public City(String city, String initDocId) {
+        this.city = city;
+        docsRepresent = new LinkedList<>();
+        docsRepresent.addFirst(initDocId);
+        infoByCity(city);
+    }
+
+    public City(String city, String country, String currency, String population, LinkedList<String> docsRepresent) {
+        this.city = city;
+        this.country = country;
+        this.currency = currency;
+        this.population = population;
+        this.docsRepresent = docsRepresent;
+    }
+
+    /**
+     * add a new DOC ID that represent by the city
+     * @param id is the document id
+     */
+    void addDocId(String id) {
+        this.docsRepresent.addLast(id);
+    }
+
+    String getCity() {
+        return city;
+    }
+
+    LinkedList<String> getDocsRepresent() {
+        return docsRepresent;
+    }
+
+    String getCountry() {
+        return country;
+    }
+
+    String getCurrency() {
+        return currency;
+    }
+
+    String getPopulation() {
+        return population;
+    }
+
     /**
      * fill the current city info by search in restCountriesAPI HashMap and geobytes API
      *
-     * @param city
+     * @param city .
      */
     private void infoByCity(String city) {
         StringBuilder stringBuilder = new StringBuilder();
@@ -132,10 +140,10 @@ public class City {
      * get the population of country and return the number with 2 numbers after the decimal point and add K/M/B
      * to this number
      *
-     * @param number
-     * @return
+     * @param number .
+     * @return .
      */
-    public static String population(String number) {
+    private static String population(String number) {
         String x = number.replaceAll(",", "");
         double num = Double.parseDouble(x);
         if (num < 1000)
@@ -154,5 +162,16 @@ public class City {
             num = Math.round(num * 100);
             return num / 100 + "B";
         }
+    }
+
+    @Override
+    public String toString() {
+        return "City{" +
+                "city='" + city +
+                ", country='" + country +
+                ", currency='" + currency +
+                ", population='" + population +
+                ", docsRepresent=" + docsRepresent.toString() +
+                '}';
     }
 }

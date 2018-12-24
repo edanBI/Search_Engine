@@ -7,7 +7,7 @@ public class Ranker {
     private HashMap<String, Document> documents;
     private double avgdl;
 
-    public Ranker(TreeMap<String, DictionaryRecord> dictionary, HashMap<String, Document> documents/*, String postingPath, boolean stem*/) {
+    public Ranker(TreeMap<String, DictionaryRecord> dictionary, HashMap<String, Document> documents) {
         this.dictionary = dictionary;
         this.documents = documents;
 
@@ -16,6 +16,7 @@ public class Ranker {
         avgdl = avgdl / this.documents.size();
     }
 
+    // TODO need to add cosine formula
     /**
      * calc the ranking score foreach document
      * @param queryTerms is the query
@@ -57,9 +58,6 @@ public class Ranker {
         }
 
         return new ArrayList<>(sortedMap(hash_scores).keySet());
-//        Map<Document, Double> sorted = sortedMap(hash_scores);
-//        for (Document document : sorted.keySet()) rankedDocs.add(document);
-//        return rankedDocs;
     }
 
     private Document getDocumentByID(String id) {
