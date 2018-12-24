@@ -2,6 +2,8 @@ package sample.Models;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import java.util.Comparator;
+import java.util.List;
 
 public class Document {
     private String doc_id;
@@ -49,8 +51,29 @@ public class Document {
         this.unique_words = unique_words;
     }
 
-    public void setEntities(String place) {
-        this.entities.append("," + place);
+    public String[] getEntities() {
+        return this.entities.toString().split("@");
     }
 
+    void setEntities(List<String> list) {
+        StringBuilder stringBuilder = new StringBuilder();
+        list.sort(new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                int oo1 = Integer.parseInt(o1.substring(o1.indexOf("_") + 1));
+                int oo2 = Integer.parseInt(o2.substring(o2.indexOf("_") + 1));
+                if (oo1 < oo2) return 1;
+                else if (oo1 > oo2) return -1;
+                else
+                    return o1.substring(0, o1.indexOf("_")).compareTo(o2.substring(0, o2.indexOf("_")));
+            }
+        });
+        for (String s : list
+        ) {
+            stringBuilder.append(s.substring(0, s.indexOf("_")) + "@");
+        }
+        if (stringBuilder != null && !stringBuilder.toString().isEmpty())
+            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+        this.entities = stringBuilder;
+    }
 }

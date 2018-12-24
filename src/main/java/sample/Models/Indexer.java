@@ -46,6 +46,7 @@ public class Indexer {
     {
         int max_tf = -1;
         Set<String> terms = d_args.keySet();
+        List<String> listOfEntitis = new ArrayList<>();
         numDocsCached++;
         numDocsIndexed++;
 
@@ -81,8 +82,11 @@ public class Indexer {
                 tmp.updateDF();
                 dictionary.replace(t, tmp);
             } else {
-                if (Character.isUpperCase(t.charAt(0)))
+                if (Character.isUpperCase(t.charAt(0))) {
                     dictionary.put(t, new DictionaryRecord(t, d_args.get(t).gettF(), true));
+                    // adds the uppercase term to the listOfEntitis
+                    listOfEntitis.add(t+"_"+d_args.get(t).gettF());
+                }
                 else
                     dictionary.put(t, new DictionaryRecord(t, d_args.get(t).gettF(), false));
             }
@@ -94,6 +98,8 @@ public class Indexer {
                 tmpPosting.get(t).add(new PostingRecord(docId, d_args.get(t).gettF(), d_args.get(t).getPlaces()));
             }
         }
+        // set the listOfEntitis in this current document
+        docsSet.get(docId).setEntities(listOfEntitis);
 
         if (numDocsCached == cachedDocsLimit)
         {
