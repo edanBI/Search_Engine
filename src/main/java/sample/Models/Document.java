@@ -2,8 +2,6 @@ package sample.Models;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
-import java.util.Comparator;
-import java.util.List;
 
 public class Document {
     private String doc_id;
@@ -17,6 +15,7 @@ public class Document {
         this.max_tf = max_tf;
         this.unique_words = unique_words;
         this.length = 0;
+        this.entities = "";
     }
 
     public Document(String doc_id, int max_tf, int unique_words, int length) {
@@ -24,6 +23,7 @@ public class Document {
         this.max_tf = max_tf;
         this.unique_words = unique_words;
         this.length = length;
+        this.entities = "";
     }
 
     String getDoc_id() {
@@ -58,36 +58,8 @@ public class Document {
         this.unique_words = unique_words;
     }
 
-    public String[] getEntities() {
-        return this.entities.split("@");
-    }
-
-    void setEntities(List<String> list) {
-        StringBuilder stringBuilder = new StringBuilder();
-        for (String s : list
-        ) {
-            stringBuilder.append(s + "@");
-        }
-        if (stringBuilder != null && !stringBuilder.toString().isEmpty())
-            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-        /*list.sort(new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                int oo1 = Integer.parseInt(o1.substring(o1.indexOf("_") + 1));
-                int oo2 = Integer.parseInt(o2.substring(o2.indexOf("_") + 1));
-                if (oo1 < oo2) return 1;
-                else if (oo1 > oo2) return -1;
-                else
-                    return o1.substring(0, o1.indexOf("_")).compareTo(o2.substring(0, o2.indexOf("_")));
-            }
-        });
-        for (String s : list
-        ) {
-            stringBuilder.append(s.substring(0, s.indexOf("_")) + "@");
-        }
-        if (stringBuilder != null && !stringBuilder.toString().isEmpty())
-            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-        this.entities = stringBuilder.toString();*/
+    public String getEntities() {
+        return entities;
     }
 
     public void setEntities(String arg) {
@@ -101,7 +73,7 @@ public class Document {
                 ", max_tf=" + max_tf +
                 ", unique_words=" + unique_words +
                 ", length=" + length +
-                ", entities=" + entities.toString() +
+                ", entities=" + entities +
                 '}';
     }
 }

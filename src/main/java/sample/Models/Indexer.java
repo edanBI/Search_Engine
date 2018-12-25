@@ -45,7 +45,7 @@ public class Indexer {
     {
         int max_tf = -1;
         Set<String> terms = d_args.keySet();
-        List<String> listOfEntities = new ArrayList<>();
+        StringBuilder stringBuilderEntities = new StringBuilder();
         numDocsCached++;
         numDocsIndexed++;
 
@@ -87,7 +87,7 @@ public class Indexer {
                     int newTf = d_args.get(t).gettF();
                     if(d_args.get(t).getImportant())
                         newTf+=10;
-                    listOfEntities.add(t+"_"+newTf);
+                    stringBuilderEntities.append(t+"_"+newTf + "@");
                 }
                 else
                     dictionary.put(t, new DictionaryRecord(t, d_args.get(t).gettF(), false));
@@ -101,7 +101,10 @@ public class Indexer {
             }
         }
         // set the listOfEntities in this current document
-        docsSet.get(docId).setEntities(listOfEntities);
+        if (stringBuilderEntities != null && !stringBuilderEntities.toString().isEmpty()) {
+            stringBuilderEntities.deleteCharAt(stringBuilderEntities.length() - 1);
+            docsSet.get(docId).setEntities(stringBuilderEntities.toString());
+        }
 
         if (numDocsCached == cachedDocsLimit)
         {

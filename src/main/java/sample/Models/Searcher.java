@@ -32,7 +32,13 @@ public class Searcher {
         this.resPath = resPath;
     }
 
-    //Finds and return the relevant documents for query and write the result to the disk
+    /**
+     * Finds and return the relevant documents for query and write the result to the disk
+     * @param query
+     * @param cities
+     * @param toSemanticTreatment
+     * @return
+     */
     public ArrayList<sample.Models.Document> relevantDocsFromQuery(String query, HashSet<City> cities, boolean toSemanticTreatment){
         ArrayList<sample.Models.Document> relevantDocs = parseFromQuery(query, cities, toSemanticTreatment);
         //send to write to file function format:"queryNumber + " 0 " + DocNum + " 1 42.38 mt"
@@ -43,7 +49,12 @@ public class Searcher {
         return relevantDocs;
     }
 
-    //Finds the relevant documents for each query in the query file and write the result to the disk
+    /**
+     * Finds the relevant documents for each query in the query file and write the result to the disk
+     * @param file
+     * @param cities
+     * @param toSemanticTreatment
+     */
     public void relevantDocsFromQueryFile(File file, HashSet<City> cities, boolean toSemanticTreatment) {
         HashMap<String, String> readQueryFile = readQueryFile(file);
         for (String queryNumber : readQueryFile.keySet()) {
@@ -56,7 +67,13 @@ public class Searcher {
         }
     }
 
-    //Finds the relevant documents for the given query
+    /**
+     *Finds the relevant documents for the given query
+     * @param query
+     * @param cities
+     * @param toSemanticTreatment
+     * @return
+     */
     private ArrayList<sample.Models.Document> parseFromQuery(String query, HashSet<City> cities, boolean toSemanticTreatment) {
         HashSet<String> docsByCities = docsByCities(cities);
         //HashMap for all the terms by docs (K- docId, V- term name ,TermData)
@@ -79,7 +96,6 @@ public class Searcher {
                 int pointer = dictionary.ceilingEntry(termToAdd).getValue().getPtr();
                 //how much lines to read from the posting line
                 int df = dictionary.ceilingEntry(termToAdd).getValue().getDF();
-                //double idf = dictionary.ceilingEntry(term).getValue().getIdf();
 
                 //all the lines of the term from the posting file
                 HashSet<String> allLineFromPostingFiles = postingLines(pointer, df, termToAdd);
@@ -110,7 +126,9 @@ public class Searcher {
         return ranker.rank(queryTerms, docsAndTerms);
     }
 
-    //Return random queryNumber
+    /**
+     * @return random queryNumber
+     */
     private String queryNum(){
         String queryNum = "" + (Searcher.queryID++);
         while (!queryIDs.contains(queryNum))
@@ -119,7 +137,12 @@ public class Searcher {
         return queryNum;
     }
 
-    //Write the query result file to disk
+    /**
+     * Write the query result file to disk
+     * @param toWrite
+     * @param resPath
+     * @param queryNumber
+     */
     private void writeQueryResultToFile(ArrayList<sample.Models.Document> toWrite, String resPath, String queryNumber) {
         try {
             File query_file;
@@ -154,7 +177,11 @@ public class Searcher {
         }
     }
 
-    //Read the query file and split it to query number and the query
+    /**
+     * Read the query file and split it to query number and the query
+     * @param file
+     * @return
+     */
     private HashMap<String, String> readQueryFile(File file) {
         HashMap<String, String> QueryById = new HashMap<>();
         try {
@@ -182,7 +209,13 @@ public class Searcher {
         return QueryById;
     }
 
-    //Return specific lines from the posting file
+    /**
+     * Return specific lines from the posting file
+     * @param firstLine
+     * @param numOfLines
+     * @param wordToSearch
+     * @return
+     */
     private HashSet<String> postingLines(int firstLine, int numOfLines, String wordToSearch) {
         String filePath;
         if (Character.isLetter(wordToSearch.charAt(0)))
@@ -201,7 +234,11 @@ public class Searcher {
         return allHisLines;
     }
 
-    //Return all the docs that the cities the func get are in their "104" tag or in the text
+    /**
+     * Return all the docs that the cities the func get are in their "104" tag or in the text
+     * @param cities
+     * @return
+     */
     private HashSet<String> docsByCities(HashSet<City> cities) {
         if (cities==null || cities.isEmpty()) {
             return null;
@@ -221,7 +258,11 @@ public class Searcher {
         return docs;
     }
 
-    //Find with Datamuse API words with a meaning similar for the given query
+    /**
+     * Find with Datamuse API words with a meaning similar for the given query
+     * @param queryWords
+     * @return
+     */
     private List<String> semanticTreatment(List<String> queryWords) {
         if (queryWords.isEmpty()) {
             return null;
