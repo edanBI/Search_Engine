@@ -164,6 +164,10 @@ public class ReadFile {
         return textById;
     }
 
+    /**
+     * Write all the cities objects to the disk
+     * @param postingPath
+     */
     public void writeCitiesToDisk(String postingPath)
     {
         try{
