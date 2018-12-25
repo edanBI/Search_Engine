@@ -64,7 +64,13 @@ public class Document {
 
     void setEntities(List<String> list) {
         StringBuilder stringBuilder = new StringBuilder();
-        list.sort(new Comparator<String>() {
+        for (String s : list
+        ) {
+            stringBuilder.append(s + "@");
+        }
+        if (stringBuilder != null && !stringBuilder.toString().isEmpty())
+            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
+        /*list.sort(new Comparator<String>() {
             @Override
             public int compare(String o1, String o2) {
                 int oo1 = Integer.parseInt(o1.substring(o1.indexOf("_") + 1));
@@ -81,7 +87,7 @@ public class Document {
         }
         if (stringBuilder != null && !stringBuilder.toString().isEmpty())
             stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-        this.entities = stringBuilder.toString();
+        this.entities = stringBuilder.toString();*/
     }
 
     public void setEntities(String arg) {

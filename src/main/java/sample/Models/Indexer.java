@@ -84,7 +84,10 @@ public class Indexer {
                 if (Character.isUpperCase(t.charAt(0))) {
                     dictionary.put(t, new DictionaryRecord(t, d_args.get(t).gettF(), true));
                     // adds the uppercase term to the listOfEntities
-                    listOfEntities.add(t+"_"+d_args.get(t).gettF());
+                    int newTf = d_args.get(t).gettF();
+                    if(d_args.get(t).getImportant())
+                        newTf+=10;
+                    listOfEntities.add(t+"_"+newTf);
                 }
                 else
                     dictionary.put(t, new DictionaryRecord(t, d_args.get(t).gettF(), false));
