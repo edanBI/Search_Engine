@@ -29,6 +29,7 @@ public class Document {
         this.length = 0;
 //        entitiesButton = new Button("Display Entities");
 //        entitiesButton.setOnAction(this::displayEntities);
+        this.entities = "";
     }
 
     public Document(String doc_id, int max_tf, int unique_words, int length) {
@@ -38,6 +39,7 @@ public class Document {
         this.length = length;
 //        entitiesButton = new Button("Display Entities");
 //        entitiesButton.setOnAction(this::displayEntities);
+        this.entities = "";
     }
 
     String getDoc_id() {

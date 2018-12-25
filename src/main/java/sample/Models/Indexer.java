@@ -45,7 +45,7 @@ public class Indexer {
     {
         int max_tf = -1;
         Set<String> terms = d_args.keySet();
-        List<String> listOfEntities = new ArrayList<>();
+        StringBuilder stringBuilderEntities = new StringBuilder();
         numDocsCached++;
         numDocsIndexed++;
 
@@ -84,7 +84,10 @@ public class Indexer {
                 if (Character.isUpperCase(t.charAt(0))) {
                     dictionary.put(t, new DictionaryRecord(t, d_args.get(t).gettF(), true));
                     // adds the uppercase term to the listOfEntities
-                    listOfEntities.add(t+"_"+d_args.get(t).gettF());
+                    int newTf = d_args.get(t).gettF();
+                    if(d_args.get(t).getImportant())
+                        newTf+=10;
+                    stringBuilderEntities.append(t+"_"+newTf + "@");
                 }
                 else
                     dictionary.put(t, new DictionaryRecord(t, d_args.get(t).gettF(), false));
@@ -98,8 +101,12 @@ public class Indexer {
             }
         }
         // set the listOfEntities in this current document
+        if (stringBuilderEntities != null && !stringBuilderEntities.toString().isEmpty()) {
+            stringBuilderEntities.deleteCharAt(stringBuilderEntities.length() - 1);
+            docsSet.get(docId).setEntities(stringBuilderEntities.toString());
+        }
         docsSet.get(docId).setMax_tf(max_tf);
-        docsSet.get(docId).setEntities(listOfEntities);
+        docsSet.get(docId).setEntities(stringBuilderEntities.toString());
 
         if (numDocsCached == cachedDocsLimit)
         {

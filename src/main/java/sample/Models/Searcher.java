@@ -10,9 +10,12 @@ import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 public class Searcher {
+    private static int queryID = 0;
+    private static HashSet<String> queryIDs = new HashSet<>();
     private Parser parser;
     private Ranker ranker;
     private String pathOfPostingFolder;
+    private String resPath;
     private TreeMap<String, DictionaryRecord> dictionary;
     private HashMap<Character, String> postingFiles = new HashMap<>();
 
@@ -21,11 +24,57 @@ public class Searcher {
         this.ranker = ranker;
         this.dictionary = dictionary;
         this.pathOfPostingFolder = pathOfPostingFolder;
+        this.resPath = "";
         initPostingFiles(postingFiles);
     }
 
-    //Finds the relevant documents for the given query
-    public ArrayList<sample.Models.Document> parseFromQuery(String query, HashSet<City> cities, boolean toSemanticTreatment) {
+    public void setResPath(String resPath) {
+        this.resPath = resPath;
+    }
+
+    /**
+     * Finds and return the relevant documents for query and write the result to the disk
+     * @param query
+     * @param cities
+     * @param toSemanticTreatment
+     * @return
+     */
+    public ArrayList<sample.Models.Document> relevantDocsFromQuery(String query, HashSet<City> cities, boolean toSemanticTreatment){
+        ArrayList<sample.Models.Document> relevantDocs = parseFromQuery(query, cities, toSemanticTreatment);
+        //send to write to file function format:"queryNumber + " 0 " + DocNum + " 1 42.38 mt"
+        if (!relevantDocs.isEmpty()) {
+            String queryNumber = queryNum();
+            writeQueryResultToFile(relevantDocs, resPath, queryNumber);
+        }
+        return relevantDocs;
+    }
+
+    /**
+     * Finds the relevant documents for each query in the query file and write the result to the disk
+     * @param file
+     * @param cities
+     * @param toSemanticTreatment
+     */
+    public void relevantDocsFromQueryFile(File file, HashSet<City> cities, boolean toSemanticTreatment) {
+        HashMap<String, String> readQueryFile = readQueryFile(file);
+        for (String queryNumber : readQueryFile.keySet()) {
+            ArrayList<sample.Models.Document> relevantDocs = parseFromQuery(readQueryFile.get(queryNumber), cities, toSemanticTreatment);
+            //send to write to file function format:" query + " 0 " + DocNum +" 1 42.38 mt"
+            if (!relevantDocs.isEmpty()) {
+                writeQueryResultToFile(relevantDocs, resPath, queryNumber);
+                queryIDs.add(queryNumber);
+            }
+        }
+    }
+
+    /**
+     *Finds the relevant documents for the given query
+     * @param query
+     * @param cities
+     * @param toSemanticTreatment
+     * @return
+     */
+    private ArrayList<sample.Models.Document> parseFromQuery(String query, HashSet<City> cities, boolean toSemanticTreatment) {
         HashSet<String> docsByCities = docsByCities(cities);
         //HashMap for all the terms by docs (K- docId, V- term name ,TermData)
         HashMap<String, HashMap<String, TermData>> docsAndTerms = new HashMap<>();
@@ -47,7 +96,6 @@ public class Searcher {
                 int pointer = dictionary.ceilingEntry(termToAdd).getValue().getPtr();
                 //how much lines to read from the posting line
                 int df = dictionary.ceilingEntry(termToAdd).getValue().getDF();
-                //double idf = dictionary.ceilingEntry(term).getValue().getIdf();
 
                 //all the lines of the term from the posting file
                 HashSet<String> allLineFromPostingFiles = postingLines(pointer, df, termToAdd);
@@ -78,49 +126,62 @@ public class Searcher {
         return ranker.rank(queryTerms, docsAndTerms);
     }
 
-    //Finds the relevant documents for each query in the query file and write the result to the disk
-    public void parseFromQueryFile(File file, HashSet<City> cities, boolean toSemanticTreatment, String resPath) {
-        HashMap<String, String> readQueryFile = readQueryFile(file);
-        ArrayList<String> ans = new ArrayList<>();
-        int i = 0;
-        for (String query : readQueryFile.keySet()) {
-            ArrayList<sample.Models.Document> docs = parseFromQuery(readQueryFile.get(query), cities, toSemanticTreatment);
-            //send to write to file function format:" query + " 0 " + DocNum +" " + relevanc 1/0 + " 42.38 mt"
-            for (sample.Models.Document document : docs) {
-                if (i < 50)
-                    ans.add(query + " 0 " + document.getDoc_id() + " 1 42.38 mt");
-                else
-                    ans.add(query + " 0 " + document.getDoc_id() + " 0 42.38 mt");
-                i++;
-            }
-        }
-        writeQueryResultToFile(ans, resPath);
+    /**
+     * @return random queryNumber
+     */
+    private String queryNum(){
+        String queryNum = "" + (Searcher.queryID++);
+        while (!queryIDs.contains(queryNum))
+            queryNum = "" + (Searcher.queryID++);
+        queryIDs.add(queryNum);
+        return queryNum;
     }
 
-    //Write the query result file to disk
-    private void writeQueryResultToFile(ArrayList<String> toPrint, String resPath) {
+    /**
+     * Write the query result file to disk
+     * @param toWrite
+     * @param resPath
+     * @param queryNumber
+     */
+    private void writeQueryResultToFile(ArrayList<sample.Models.Document> toWrite, String resPath, String queryNumber) {
         try {
             File query_file;
             if (resPath.length() > 0)
-                query_file = new File(resPath);
+                query_file = new File(resPath + "\\qrels.txt");
             else
-                query_file = new File(pathOfPostingFolder + "/qrels.txt");
-            BufferedWriter br = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(query_file), StandardCharsets.UTF_8));
-            toPrint.forEach((s) -> {
-                try {
-                    br.write(s);
-                    br.newLine();
+                query_file = new File(pathOfPostingFolder + "\\qrels.txt");
+            if (!query_file.exists()) {
+                BufferedWriter br = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(query_file), StandardCharsets.UTF_8));
+                toWrite.forEach((doc) -> {
+                    try {
+                        br.write(queryNumber + " 0 " + doc.getDoc_id() + " 1 42.38 mt");
+                        br.newLine();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                });
+                br.close();
+            } else {
+                try (FileWriter fw = new FileWriter(query_file, true);
+                     BufferedWriter bw = new BufferedWriter(fw);
+                     PrintWriter out = new PrintWriter(bw)) {
+                    for (sample.Models.Document doc : toWrite) {
+                        out.println(queryNumber + " 0 " + doc.getDoc_id() + " 1 42.38 mt");
+                    }
                 } catch (IOException e) {
-                    e.printStackTrace();
+                    e.getStackTrace();
                 }
-            });
-            br.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    //Read the query file and split it to query number and the query
+    /**
+     * Read the query file and split it to query number and the query
+     * @param file
+     * @return
+     */
     private HashMap<String, String> readQueryFile(File file) {
         HashMap<String, String> QueryById = new HashMap<>();
         try {
@@ -148,11 +209,17 @@ public class Searcher {
         return QueryById;
     }
 
-    //Return specific lines from the posting file
-    private HashSet<String> postingLines(int firstLine, int numOfLines, String firstWordCharacter) {
+    /**
+     * Return specific lines from the posting file
+     * @param firstLine
+     * @param numOfLines
+     * @param wordToSearch
+     * @return
+     */
+    private HashSet<String> postingLines(int firstLine, int numOfLines, String wordToSearch) {
         String filePath;
-        if (Character.isLetter(firstWordCharacter.charAt(0)))
-            filePath = pathOfPostingFolder + "/Posting Files/" + postingFiles.get(firstWordCharacter.toUpperCase().charAt(0));
+        if (Character.isLetter(wordToSearch.charAt(0)))
+            filePath = pathOfPostingFolder + "/Posting Files/" + postingFiles.get(wordToSearch.toUpperCase().charAt(0));
         else filePath = pathOfPostingFolder + "/Posting Files/$-9.txt";
 
         HashSet<String> allHisLines = new HashSet<>();
@@ -167,7 +234,11 @@ public class Searcher {
         return allHisLines;
     }
 
-    //Return all the docs that the cities the func get are in their "104" tag or in the text
+    /**
+     * Return all the docs that the cities the func get are in their "104" tag or in the text
+     * @param cities
+     * @return
+     */
     private HashSet<String> docsByCities(HashSet<City> cities) {
         if (cities==null || cities.isEmpty()) {
             return null;
@@ -187,7 +258,11 @@ public class Searcher {
         return docs;
     }
 
-    //Find with Datamuse API words with a meaning similar for the given query
+    /**
+     * Find with Datamuse API words with a meaning similar for the given query
+     * @param queryWords
+     * @return
+     */
     private List<String> semanticTreatment(List<String> queryWords) {
         if (queryWords.isEmpty()) {
             return null;
@@ -259,4 +334,43 @@ public class Searcher {
         postingFiles.put('Y', "Y-Z.txt");
         postingFiles.put('Z', "Y-Z.txt");
     }
+
+    //TO ADD
+    /*
+    public List<String> strongestEntities(String entities, TreeMap<String,Integer> dictionary) {
+        List<String> list = new ArrayList<>();
+        String[] entitiesArr = entities.split("@");
+        for (String s : entitiesArr) {
+            if (dictionary.containsKey(s.substring(0, s.indexOf("_")))) {
+                int df = dictionary.get(s.substring(0, s.indexOf("_")));
+                int newTf = Integer.parseInt(s.substring(s.indexOf("_") + 1));
+                double rank = (double) (newTf) / (double) (df);
+                rank = round(rank, 3);
+                list.add("Entity: " + s.substring(0, s.indexOf("_")) + " ,Score: " + rank);
+            }
+        }
+
+        list.sort(new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                double oo1 = Double.parseDouble(o1.substring(o1.indexOf("Score:") + 7));
+                double oo2 = Double.parseDouble(o2.substring(o2.indexOf("Score:") + 7));
+                if (oo1 < oo2) return 1;
+                else if (oo1 > oo2) return -1;
+                else
+                    return o1.substring(o1.indexOf("Entity: ") + 8, o1.indexOf(" ,Score:")).compareTo(o2.substring(o2.indexOf("Entity: ") + 8, o2.indexOf(" ,Score:")));
+            }
+        });
+        return list;
+    }
+    //TO ADD
+    public double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        long factor = (long) Math.pow(10, places);
+        value = value * factor;
+        long tmp = Math.round(value);
+        return (double) tmp / factor;
+    }*/
+
 }

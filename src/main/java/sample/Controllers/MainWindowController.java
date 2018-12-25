@@ -167,6 +167,7 @@ public class MainWindowController implements Initializable
         else if (actionEvent.getSource().equals(btn_resPath) && selectedDir!=null) {
             lbl_resPath.setText("  Results File Path: " + selectedDir.getAbsolutePath() + "\\qrels.txt");
             resQueries_path = selectedDir.getAbsolutePath();
+            searcher.setResPath(resQueries_path);
         }
     }
 
@@ -371,9 +372,9 @@ public class MainWindowController implements Initializable
         ObservableList<Document> retrievedDocumentsList;
         if (txt_queryEntry.getText().length() > 0) {
             if (hs_citiesSelected==null) hs_citiesSelected=new HashSet<>();
-            retrievedDocumentsList = FXCollections.observableArrayList(searcher.parseFromQuery(txt_queryEntry.getText(), hs_citiesSelected, toSemantic));
+            retrievedDocumentsList = FXCollections.observableArrayList(searcher.relevantDocsFromQuery(txt_queryEntry.getText(), hs_citiesSelected, toSemantic));
         } else {
-            searcher.parseFromQueryFile(qFile, hs_citiesSelected, toSemantic, resQueries_path!=null ? resQueries_path : "");
+            searcher.relevantDocsFromQueryFile(qFile, hs_citiesSelected, toSemantic);
             new Alert(Alert.AlertType.INFORMATION, "IR  completed. Queries result stored in file!").showAndWait();
             return;
         }
@@ -417,7 +418,7 @@ public class MainWindowController implements Initializable
             txt_queryPath.setText(qFile.getAbsolutePath());
         }
         // run the searcher on the query file
-        //searcher.parseFromQueryFile(qFile, hs_citiesSelected, toSemantic);
+        //searcher.relevantDocsFromQueryFile(qFile, hs_citiesSelected, toSemantic);
     }
 
     private HashMap<String, Document> restoreDocuments() throws IOException
