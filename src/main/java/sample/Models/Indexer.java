@@ -106,7 +106,6 @@ public class Indexer {
             docsSet.get(docId).setEntities(stringBuilderEntities.toString());
         }
         docsSet.get(docId).setMax_tf(max_tf);
-        docsSet.get(docId).setEntities(stringBuilderEntities.toString());
 
         if (numDocsCached == cachedDocsLimit)
         {
