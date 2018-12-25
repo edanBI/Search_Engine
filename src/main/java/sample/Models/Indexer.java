@@ -543,8 +543,10 @@ public class Indexer {
     public void writeDocumentsToDisk()
     {
         try {
+            File progData = new File(postingDir + "/ProgramData");
+            if (!progData.exists()) progData.mkdirs();
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(postingDir + "/ProgramData/Documents.txt"), StandardCharsets.UTF_8));
+                    new FileOutputStream(progData + "/Documents.txt"), StandardCharsets.UTF_8));
             for (Document doc : docsSet.values()) {
                 bw.write(doc.toString());
                 bw.newLine();
@@ -569,13 +571,13 @@ public class Indexer {
             String term = curr.substring(0, curr.indexOf("---DF"));
             if (term.length()==0)
                 term = "-";
-            len += term.length() + 5;
-            int df = Integer.parseInt(curr.substring(len, curr.indexOf("---TF", len)));
-            len += Integer.toString(df).length() + 5;
-            int totalFreq = Integer.parseInt(curr.substring(len, curr.indexOf("---PTR", len)));
-            len += Integer.toString(totalFreq).length() + 6;
-            int ptr = Integer.parseInt(curr.substring(len, curr.indexOf("---IDF", len)));
-            len += Integer.toString(ptr).length() + 6;
+            len += term.length() + 6;
+            int df = Integer.parseInt(curr.substring(len, curr.indexOf("---TF=", len)));
+            len += Integer.toString(df).length() + 6;
+            int totalFreq = Integer.parseInt(curr.substring(len, curr.indexOf("---PTR=", len)));
+            len += Integer.toString(totalFreq).length() + 7;
+            int ptr = Integer.parseInt(curr.substring(len, curr.indexOf("---IDF=", len)));
+            len += Integer.toString(ptr).length() + 7;
             double idf = Double.parseDouble(curr.substring(len));
 
             dictionary.put(term, new DictionaryRecord(term, df, totalFreq, ptr, idf));

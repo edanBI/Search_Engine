@@ -31,10 +31,13 @@ public class MainWindowController implements Initializable
     private long startTime, endTime;
     private String corpus_path, postings_path, resQueries_path;
     private HashSet<City> hs_citiesSelected;
+    private TreeMap<String, DictionaryRecord> loadedDictionary;
+    private HashMap<String, City> loadedCities;
 
     private ReadFile readFile;
     private Indexer indexer;
     private Searcher searcher;
+    private Ranker ranker;
 
     private File qFile;
 
@@ -126,8 +129,8 @@ public class MainWindowController implements Initializable
         displaySummary();
 
         // init for the search phase
-        Ranker ranker = new Ranker(indexer.getDictionary(), indexer.getDocsSet());
-        searcher = new Searcher(parser, indexer, ranker, postings_path);
+        ranker = new Ranker(indexer.getDictionary(), indexer.getDocsSet());
+        searcher = new Searcher(parser, indexer.getDictionary(), ranker, postings_path);
     }
 
     /**
@@ -203,7 +206,7 @@ public class MainWindowController implements Initializable
     @FXML
     public void displayDictionary()
     {
-        if (indexer == null) {
+        if (indexer == null && loadedDictionary==null) {
             new Alert(Alert.AlertType.ERROR, "Dictionary N/A").showAndWait();
             return;
         }
@@ -213,7 +216,11 @@ public class MainWindowController implements Initializable
             String dic_path =
                     this.toStem ? postings_path + "\\dictionary_stemmer.txt" : postings_path + "\\dictionary.txt";
 
-            Collection<DictionaryRecord> list = indexer.getDictionary().values();
+            Collection<DictionaryRecord> list;
+            if (indexer != null)
+                list = indexer.getDictionary().values();
+            else
+                list = loadedDictionary.values();
             ObservableList<DictionaryRecord> details = FXCollections.observableArrayList(list);
 
             TableView<DictionaryRecord> tbl_dictionary = new TableView<>();
@@ -251,7 +258,7 @@ public class MainWindowController implements Initializable
     {
         try {
             String str = txt_postings_path.getText();
-            TreeMap<String, DictionaryRecord> loadedDictionary = Indexer.readDictionaryFromFile(str);
+            loadedDictionary = Indexer.readDictionaryFromFile(str);
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Dictionary Loaded");
             alert.show();
         } catch (IOException e) {
@@ -293,14 +300,14 @@ public class MainWindowController implements Initializable
      */
     public void displayCities()
     {
-        if (readFile == null) {
+        try { restoreCities(); }
+        catch (IOException e) {
             new Alert(Alert.AlertType.ERROR, "No Cities to display").showAndWait();
             return;
         }
 
-        Set<String> cities = readFile.getAllDocsCity().keySet();
         ObservableList<String> list = FXCollections.observableArrayList();
-        list.addAll(cities);
+        list.addAll(loadedCities.keySet());
         list = list.sorted();
 
         Stage window = new Stage();
@@ -309,8 +316,13 @@ public class MainWindowController implements Initializable
             public void onChanged(ListChangeListener.Change<? extends String> c) {
                 hs_citiesSelected = new HashSet<>();
                 ObservableList<String> selected = checkListView.getCheckModel().getCheckedItems();
-                for (String city : selected) {
-                    hs_citiesSelected.add(readFile.getAllDocsCity().get(city));
+                if (readFile!=null) {
+                    for (String city : selected) {
+                        hs_citiesSelected.add(readFile.getAllDocsCity().get(city));
+                    }
+                } else {
+                    for (String city : selected)
+                        hs_citiesSelected.add(loadedCities.get(city));
                 }
             }
         });
@@ -324,28 +336,37 @@ public class MainWindowController implements Initializable
     /**
      * run the query from the text area which the user had typed in.
      */
-    public void runQuery() {
+    public void runQuery()  {
+        if (loadedDictionary == null) {
+            new Alert(Alert.AlertType.ERROR, "Load Dictionary First!").showAndWait();
+            return;
+        }
+        if (postings_path == null || postings_path.length()==0) {
+            new Alert(Alert.AlertType.ERROR, "Enter Postings Directory Path!").showAndWait();
+            return;
+        }
         if (txt_queryEntry.getText().length()==0 && txt_queryPath.getText().length()==0) {
-            new Alert(Alert.AlertType.ERROR, "Please Enter Query").showAndWait();
+            new Alert(Alert.AlertType.ERROR, "Please Enter a Query").showAndWait();
             return;
         }
         if (txt_queryEntry.getText().length()>0 && txt_queryPath.getText().length()>0) {
-            new Alert(Alert.AlertType.ERROR, "Unable to run two queries. Please Choose only one!").showAndWait();
+            new Alert(Alert.AlertType.ERROR, "Unable to run two queries. Please Choose only one").showAndWait();
             return;
         }
 
         // get the ranked documents
         if (searcher == null) {
-            //searcher = new Searcher(new Parser(corpus_path, toStem), restoreDocuments(), res)
+            try { ranker = new Ranker(loadedDictionary, restoreDocuments()); }
+            catch (IOException e) { e.printStackTrace(); }
+            searcher = new Searcher(new Parser(corpus_path, toStem), loadedDictionary, ranker, postings_path);
         }
         ObservableList<Document> retrievedDocumentsList;
         if (txt_queryEntry.getText().length() > 0) {
+            if (hs_citiesSelected==null) hs_citiesSelected=new HashSet<>();
             retrievedDocumentsList = FXCollections.observableArrayList(searcher.parseFromQuery(txt_queryEntry.getText(), hs_citiesSelected, toSemantic));
         } else {
-            if (resQueries_path != null)
-                searcher.parseFromQueryFile(qFile, hs_citiesSelected, toSemantic, resQueries_path);
-            else
-                searcher.parseFromQueryFile(qFile, hs_citiesSelected, toSemantic, "");
+            searcher.parseFromQueryFile(qFile, hs_citiesSelected, toSemantic, resQueries_path!=null ? resQueries_path : "");
+            new Alert(Alert.AlertType.INFORMATION, "IR  completed. Queries result stored in file!").showAndWait();
             return;
         }
 
@@ -355,6 +376,7 @@ public class MainWindowController implements Initializable
 
         TableView<Document> tbl_documents = new TableView<>();
         TableColumn<Document, String> col_ids = new TableColumn<>();
+        TableColumn<Button, String> col_entities = new TableColumn<>();
 
         tbl_documents.setMinWidth(500.0);
         tbl_documents.setMinHeight(802.0);
@@ -407,25 +429,23 @@ public class MainWindowController implements Initializable
         return docSet;
     }
 
-    private HashMap<String, City> restoreCities() throws IOException
+    private void restoreCities() throws IOException
     {
-        HashMap<String, City> cities = new HashMap<>();
+        loadedCities = new HashMap<>();
         BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Cities.txt"));
         String line, city, country, currency, population, docs[];
         LinkedList<String> list;
 
         while ((line = br.readLine()) != null) {
-            city = line.substring(10, line.indexOf(", country='"));
+            city = line.substring(0, line.indexOf(" : {country="));
             country = line.substring(line.indexOf(", country='")+10, line.indexOf(", currency='"));
             currency = line.substring(line.indexOf(", currency='")+11, line.indexOf(", population='"));
             population = line.substring(line.indexOf(", population='")+13, line.indexOf(", docsRepresent="));
 
-            docs = line.substring(line.indexOf(", docsRepresent=")+17, line.length()-1).split(",");
+            docs = line.substring(line.indexOf(", docsRepresent=")+17, line.length()-2).split(",");
             list = new LinkedList<>(Arrays.asList(docs));
 
-            cities.put(city, new City(city, country, currency, population, list));
+            loadedCities.put(city, new City(city, country, currency, population, list));
         }
-
-        return cities;
     }
 }

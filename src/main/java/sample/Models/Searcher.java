@@ -11,15 +11,15 @@ import java.util.*;
 
 public class Searcher {
     private Parser parser;
-    private Indexer indexer;
     private Ranker ranker;
     private String pathOfPostingFolder;
+    private TreeMap<String, DictionaryRecord> dictionary;
     private HashMap<Character, String> postingFiles = new HashMap<>();
 
-    public Searcher(Parser parser, Indexer indexer, Ranker ranker, String pathOfPostingFolder) {
+    public Searcher(Parser parser, TreeMap<String, DictionaryRecord> dictionary, Ranker ranker, String pathOfPostingFolder) {
         this.parser = parser;
-        this.indexer = indexer;
         this.ranker = ranker;
+        this.dictionary = dictionary;
         this.pathOfPostingFolder = pathOfPostingFolder;
         initPostingFiles(postingFiles);
     }
@@ -30,24 +30,24 @@ public class Searcher {
         //HashMap for all the terms by docs (K- docId, V- term name ,TermData)
         HashMap<String, HashMap<String, TermData>> docsAndTerms = new HashMap<>();
         //return all the Terms of the query, after parse
-        List<String> queryTerms = new ArrayList<String>(parser.Parsing(query).keySet());
+        List<String> queryTerms = new ArrayList<>(parser.Parsing(query).keySet());
         //add to the list words with a meaning similar for the given query
         if (toSemanticTreatment && semanticTreatment(queryTerms) != null)
             queryTerms.addAll(semanticTreatment(queryTerms));
         for (String term : queryTerms) {
             //check if the term is in the dictionary
-            if (indexer.getDictionary().containsKey(term) || indexer.getDictionary().containsKey(term.toUpperCase()) ||
-                    indexer.getDictionary().containsKey(term.toLowerCase())) {
+            if (dictionary.containsKey(term) || dictionary.containsKey(term.toUpperCase()) ||
+                    dictionary.containsKey(term.toLowerCase())) {
                 String termToAdd = term;
-                if (indexer.getDictionary().containsKey(term.toUpperCase()))
+                if (dictionary.containsKey(term.toUpperCase()))
                     termToAdd = term.toUpperCase();
-                else if (indexer.getDictionary().containsKey(term.toLowerCase()))
+                else if (dictionary.containsKey(term.toLowerCase()))
                     termToAdd = term.toLowerCase();
                 //find the pointer for the line in the posting line
-                int pointer = indexer.getDictionary().ceilingEntry(termToAdd).getValue().getPtr();
+                int pointer = dictionary.ceilingEntry(termToAdd).getValue().getPtr();
                 //how much lines to read from the posting line
-                int df = indexer.getDictionary().ceilingEntry(termToAdd).getValue().getDF();
-                //double idf = indexer.getDictionary().ceilingEntry(term).getValue().getIdf();
+                int df = dictionary.ceilingEntry(termToAdd).getValue().getDF();
+                //double idf = dictionary.ceilingEntry(term).getValue().getIdf();
 
                 //all the lines of the term from the posting file
                 HashSet<String> allLineFromPostingFiles = postingLines(pointer, df, termToAdd);
@@ -169,15 +169,15 @@ public class Searcher {
 
     //Return all the docs that the cities the func get are in their "104" tag or in the text
     private HashSet<String> docsByCities(HashSet<City> cities) {
-        if (cities.isEmpty()) {
+        if (cities==null || cities.isEmpty()) {
             return null;
         }
         HashSet<String> docs = new HashSet<>();
         for (City c : cities) {
             docs.addAll(c.getDocsRepresent());
-            if (indexer.getDictionary().containsKey(c.getCity())) {
-                int pointer = indexer.getDictionary().ceilingEntry(c.getCity()).getValue().getPtr();
-                int df = indexer.getDictionary().ceilingEntry(c.getCity()).getValue().getDF();
+            if (dictionary.containsKey(c.getCity())) {
+                int pointer = dictionary.ceilingEntry(c.getCity()).getValue().getPtr();
+                int df = dictionary.ceilingEntry(c.getCity()).getValue().getDF();
                 HashSet<String> allLineFromPostingFiles = postingLines(pointer, df, c.getCity());
                 for (String line : allLineFromPostingFiles) {
                     docs.add(line.substring(line.indexOf("| docId=") + 8, line.indexOf(", tf=")));

@@ -167,10 +167,12 @@ public class ReadFile {
     public void writeCitiesToDisk(String postingPath)
     {
         try{
+            File progData = new File(postingPath + "/ProgramData");
+            if (!progData.exists()) progData.mkdirs();
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(postingPath + "/ProgramData/Cities.txt"), StandardCharsets.UTF_8));
+                    new FileOutputStream(progData + "/Cities.txt"), StandardCharsets.UTF_8));
             for (Map.Entry<String, City> entry : allDocsCity.entrySet()) {
-                bw.write(entry.getKey() + " : " + entry.getValue().toString());
+                bw.write(entry.getValue().toString());
                 bw.newLine();
             }
         } catch (IOException e) { e.printStackTrace(); }
