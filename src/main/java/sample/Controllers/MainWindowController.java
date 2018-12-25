@@ -1,5 +1,9 @@
 package sample.Controllers;
 
+import javafx.beans.property.IntegerProperty;
+import javafx.beans.property.ReadOnlyObjectWrapper;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -8,16 +12,19 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import org.apache.commons.io.FileUtils;
 import org.controlsfx.control.CheckListView;
 import sample.Models.*;
 
+import javax.print.Doc;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -336,7 +343,8 @@ public class MainWindowController implements Initializable
     /**
      * run the query from the text area which the user had typed in.
      */
-    public void runQuery()  {
+    public void runQuery()
+    {
         if (loadedDictionary == null) {
             new Alert(Alert.AlertType.ERROR, "Load Dictionary First!").showAndWait();
             return;
@@ -373,20 +381,21 @@ public class MainWindowController implements Initializable
         // display the retrieved documents in new stage
         Stage window = new Stage();
         window.setTitle("Retrieved Documents");
+        TableView<Document> tbl = new TableView<>();
+        TableColumn<Document, String> col_ids = new TableColumn<>("Document ID");
+        TableColumn col_entities = new TableColumn<>("Display Entities");
+        tbl.getColumns().add(col_ids);
+        tbl.getColumns().add(col_entities);
 
-        TableView<Document> tbl_documents = new TableView<>();
-        TableColumn<Document, String> col_ids = new TableColumn<>();
-        TableColumn<Button, String> col_entities = new TableColumn<>();
-
-        tbl_documents.setMinWidth(500.0);
-        tbl_documents.setMinHeight(802.0);
-        col_ids.setText("Document ID");
-        col_ids.setMinWidth(300.0);
-        tbl_documents.getColumns().add(col_ids);
         col_ids.setCellValueFactory(data -> data.getValue().getPropertyDoc_id());
-        tbl_documents.setItems(retrievedDocumentsList);
+        col_entities.setCellValueFactory(new PropertyValueFactory<Document, String>("entities"));
+        /*col_entities.setCellValueFactory(
+                new PropertyValueFactory<Document, String>("entitiesButton")
+        );*/
 
-        ScrollPane scrollPane = new ScrollPane(tbl_documents);
+        tbl.setItems(retrievedDocumentsList);
+
+        ScrollPane scrollPane = new ScrollPane(tbl);
         scrollPane.setFitToWidth(true);
         Scene scene = new Scene(scrollPane, 515, 705);
         window.setScene(scene);
@@ -396,7 +405,8 @@ public class MainWindowController implements Initializable
     /**
      * run the query from the file in the path the user had entered.
      */
-    public void browseQueryFile() {
+    public void browseQueryFile()
+    {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("TEXT files (*.txt)", "*.txt"),
@@ -417,7 +427,7 @@ public class MainWindowController implements Initializable
         String line, docId;
         int max_tf, unique_words, length;
         while ((line = br.readLine()) != null) {
-            docId = line.substring(7, line.indexOf(", max_tf="));
+            docId = line.substring(16, line.indexOf(", max_tf="));
             max_tf = Integer.parseInt(line.substring(line.indexOf(", max_tf=")+9, line.indexOf(", unique_words=")));
             unique_words = Integer.parseInt(line.substring(line.indexOf(", unique_words=")+15, line.indexOf(", length=")));
             length = Integer.parseInt(line.substring(line.indexOf(", length=")+9, line.indexOf(", entities=")));

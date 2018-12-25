@@ -2,8 +2,17 @@ package sample.Models;
 
 import javafx.beans.property.SimpleStringProperty;
 import javafx.beans.property.StringProperty;
+import javafx.collections.FXCollections;
+import javafx.event.ActionEvent;
+import javafx.scene.Scene;
+import javafx.scene.control.Button;
+import javafx.scene.control.ListView;
+import javafx.stage.Stage;
+
+import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 
 public class Document {
     private String doc_id;
@@ -11,12 +20,15 @@ public class Document {
     private int unique_words;
     private int length;
     private String entities;
+    private Button entitiesButton;
 
     Document(String doc_id, int max_tf, int unique_words) {
         this.doc_id = doc_id;
         this.max_tf = max_tf;
         this.unique_words = unique_words;
         this.length = 0;
+//        entitiesButton = new Button("Display Entities");
+//        entitiesButton.setOnAction(this::displayEntities);
     }
 
     public Document(String doc_id, int max_tf, int unique_words, int length) {
@@ -24,6 +36,8 @@ public class Document {
         this.max_tf = max_tf;
         this.unique_words = unique_words;
         this.length = length;
+//        entitiesButton = new Button("Display Entities");
+//        entitiesButton.setOnAction(this::displayEntities);
     }
 
     String getDoc_id() {
@@ -91,11 +105,28 @@ public class Document {
     @Override
     public String toString() {
         return "Document{" +
-                "doc_id='" + doc_id +
+                "doc_id=" + doc_id +
                 ", max_tf=" + max_tf +
                 ", unique_words=" + unique_words +
                 ", length=" + length +
-                ", entities=" + entities.toString() +
+                ", entities=" + entities +
                 '}';
+    }
+
+    public Button getEntitiesButton() {
+        return entitiesButton;
+    }
+
+    public void setEntitiesButton(Button entitiesButton) {
+        this.entitiesButton = entitiesButton;
+        this.entitiesButton.setOnAction(this::displayEntities);
+    }
+
+    private void displayEntities(ActionEvent event) {
+        ListView<String> list = new ListView<>(FXCollections.observableArrayList(Arrays.asList(getEntities())));
+        Scene scene = new Scene(list);
+        Stage window = new Stage();
+        window.setScene(scene);
+        window.showAndWait();
     }
 }

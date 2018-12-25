@@ -98,6 +98,7 @@ public class Indexer {
             }
         }
         // set the listOfEntities in this current document
+        docsSet.get(docId).setMax_tf(max_tf);
         docsSet.get(docId).setEntities(listOfEntities);
 
         if (numDocsCached == cachedDocsLimit)

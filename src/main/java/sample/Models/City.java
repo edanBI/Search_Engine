@@ -167,9 +167,9 @@ public class City {
     @Override
     public String toString() {
         return  city + " : { " +
-                "country='" + country +
-                ", currency='" + currency +
-                ", population='" + population +
+                "country=" + country +
+                ", currency=" + currency +
+                ", population=" + population +
                 ", docsRepresent=" + docsRepresent.toString() +
                 '}';
     }

@@ -1,5 +1,6 @@
 package sample.Models;
 
+import javax.print.Doc;
 import java.util.*;
 
 public class Ranker {
@@ -47,7 +48,7 @@ public class Ranker {
             for (String w : intersect) {
                 c_w_d = docEntry.getValue().get(w).gettF();
                 w_score = (k1+1) * c_w_d * dictionary.get(w).getIdf();
-                w_score /= c_w_d + k1*(1-b+b*(getDocumentByID(docEntry.getKey()).getLength() / avgdl));
+                w_score /= c_w_d + k1 * (1 - b + b * (documents.get(docEntry.getKey()).getLength() / avgdl));
                 // give the word a bigger weight if it was tagged as important while parsing
                 if (docEntry.getValue().get(w).getImportant())
                     w_score *= 1.5;
@@ -57,17 +58,14 @@ public class Ranker {
             hash_scores.put(docEntry.getKey(), score);
         }
 
-        return new ArrayList<>(sortedMap(hash_scores).keySet());
-    }
-
-    private Document getDocumentByID(String id) {
-        Iterator<Map.Entry<String, Document>> it = documents.entrySet().iterator();
-        Map.Entry<String, Document> entry;
-        while ((entry = it.next()) != null) {
-            if (entry.getKey().equals(id))
-                return entry.getValue();
+        ArrayList<Document> ranked_arr = new ArrayList<>(50);
+        Map<Document, Double> map = sortedMap(hash_scores);
+        Object[] sorted = map.keySet().toArray();
+//        Object[] sorted = sortedMap(hash_scores).keySet().toArray();
+        for (int i=0 ; i<50; i++) {
+            ranked_arr.add((Document) sorted[i]);
         }
-        return null;
+        return ranked_arr;
     }
 
     // return a map sorted by VALUE
@@ -84,7 +82,7 @@ public class Ranker {
 
         Map<Document, Double> sorted = new LinkedHashMap<>();
         for (Map.Entry<String, Double> entry : list) {
-            sorted.put(getDocumentByID(entry.getKey()), entry.getValue());
+            sorted.put(documents.get(entry.getKey()), entry.getValue());
         }
         return sorted;
     }
