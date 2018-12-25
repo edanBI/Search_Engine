@@ -464,11 +464,15 @@ public class Parser {
                     || (s == ',' && (str.length() == 0 || text.length() > i + 3 && !(Character.isDigit(text.charAt(i - 1)) && Character.isDigit(text.charAt(i + 1)) && Character.isDigit(text.charAt(i + 2)) && Character.isDigit(text.charAt(i + 3)))))) {
                 if (str.length() > 0) {
                     myList.add(str.toString());
-                    str.delete(0, str.capacity());
+                    str.delete(0, str.length());
                 }
             } else
                 str.append(s);
             i++;
+        }
+        if (!str.toString().isEmpty()){
+            myList.add(str.toString());
+            str.delete(0,str.length());
         }
     }
 

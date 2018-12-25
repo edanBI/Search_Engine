@@ -39,7 +39,7 @@ public class Ranker {
             score = 0.0;
 
             // create the set of all the word which are both in the document and the query
-            for (String q : queryTerms){
+            for (String q : queryTerms) {
                 if (docEntry.getValue().containsKey(q))
                     intersect.add(q);
             }
@@ -47,7 +47,7 @@ public class Ranker {
             // calc BM25 formula foreach word w in the intersection set
             for (String w : intersect) {
                 c_w_d = docEntry.getValue().get(w).gettF();
-                w_score = (k1+1) * c_w_d * dictionary.get(w).getIdf();
+                w_score = (k1 + 1) * c_w_d * dictionary.get(w).getIdf();
                 w_score /= c_w_d + k1 * (1 - b + b * (documents.get(docEntry.getKey()).getLength() / avgdl));
                 // give the word a bigger weight if it was tagged as important while parsing
                 if (docEntry.getValue().get(w).getImportant())
@@ -62,7 +62,7 @@ public class Ranker {
         Map<Document, Double> map = sortedMap(hash_scores);
         Object[] sorted = map.keySet().toArray();
 //        Object[] sorted = sortedMap(hash_scores).keySet().toArray();
-        for (int i=0 ; i<50; i++) {
+        for (int i = 0; i < 50 && i < sorted.length; i++) {
             ranked_arr.add((Document) sorted[i]);
         }
         return ranked_arr;
