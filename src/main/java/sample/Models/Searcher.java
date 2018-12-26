@@ -24,7 +24,7 @@ public class Searcher {
         this.ranker = ranker;
         this.dictionary = dictionary;
         this.pathOfPostingFolder = pathOfPostingFolder;
-        this.resPath = "";
+        this.resPath = pathOfPostingFolder;
         initPostingFiles(postingFiles);
     }
 
@@ -44,7 +44,7 @@ public class Searcher {
         //send to write to file function format:"queryNumber + " 0 " + DocNum + " 1 42.38 mt"
         if (!relevantDocs.isEmpty()) {
             String queryNumber = queryNum();
-            writeQueryResultToFile(relevantDocs, resPath, queryNumber);
+            writeQueryResultToFile(relevantDocs, queryNumber);
         }
         return relevantDocs;
     }
@@ -61,7 +61,7 @@ public class Searcher {
             ArrayList<sample.Models.Document> relevantDocs = parseFromQuery(readQueryFile.get(queryNumber), cities, toSemanticTreatment);
             //send to write to file function format:" query + " 0 " + DocNum +" 1 42.38 mt"
             if (!relevantDocs.isEmpty()) {
-                writeQueryResultToFile(relevantDocs, resPath, queryNumber);
+                writeQueryResultToFile(relevantDocs, queryNumber);
                 queryIDs.add(queryNumber);
             }
         }
@@ -140,16 +140,11 @@ public class Searcher {
     /**
      * Write the query result file to disk
      * @param toWrite
-     * @param resPath
      * @param queryNumber
      */
-    private void writeQueryResultToFile(ArrayList<sample.Models.Document> toWrite, String resPath, String queryNumber) {
+    private void writeQueryResultToFile(ArrayList<sample.Models.Document> toWrite, String queryNumber) {
         try {
-            File query_file;
-            if (resPath.length() > 0)
-                query_file = new File(resPath + "\\qrels.txt");
-            else
-                query_file = new File(pathOfPostingFolder + "\\qrels.txt");
+            File query_file = new File(resPath + "\\qrels.txt");
             if (!query_file.exists()) {
                 BufferedWriter br = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(query_file), StandardCharsets.UTF_8));
                 toWrite.forEach((doc) -> {
@@ -168,6 +163,9 @@ public class Searcher {
                     for (sample.Models.Document doc : toWrite) {
                         out.println(queryNumber + " 0 " + doc.getDoc_id() + " 1 42.38 mt");
                     }
+                    out.close();
+                    bw.close();
+                    fw.close();
                 } catch (IOException e) {
                     e.getStackTrace();
                 }
@@ -218,11 +216,20 @@ public class Searcher {
      */
     private HashSet<String> postingLines(int firstLine, int numOfLines, String wordToSearch) {
         String filePath;
-        if (Character.isLetter(wordToSearch.charAt(0)))
-            filePath = pathOfPostingFolder + "/Posting Files/" + postingFiles.get(wordToSearch.toUpperCase().charAt(0));
-        else filePath = pathOfPostingFolder + "/Posting Files/$-9.txt";
-
         HashSet<String> allHisLines = new HashSet<>();
+        File noStemmerDir = new File(pathOfPostingFolder + "/Posting Files");
+        File stemmerDir = new File(pathOfPostingFolder + "/Posting Files_stemmer");
+
+        if (noStemmerDir.exists()) {
+            if (Character.isLetter(wordToSearch.charAt(0)))
+                filePath = pathOfPostingFolder + "/Posting Files/" + postingFiles.get(wordToSearch.toUpperCase().charAt(0));
+            else filePath = pathOfPostingFolder + "/Posting Files/$-9.txt";
+        }else if (stemmerDir.exists()){
+            if (Character.isLetter(wordToSearch.charAt(0)))
+                filePath = pathOfPostingFolder + "/Posting Files_stemmer/" + postingFiles.get(wordToSearch.toUpperCase().charAt(0));
+            else filePath = pathOfPostingFolder + "/Posting Files_stemmer/$-9.txt";
+        }else return allHisLines;
+
         try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
             for (int i = 0; i < firstLine; i++)
                 br.readLine();

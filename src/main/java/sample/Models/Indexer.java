@@ -571,7 +571,12 @@ public class Indexer {
     {
         int len = 0;
         TreeMap<String, DictionaryRecord> dictionary = new TreeMap<>();
-        BufferedReader br = new BufferedReader(new FileReader(path + "/dictionary.txt"));
+        File file = new File(path + "/dictionary.txt");
+        BufferedReader br;
+        if (file.exists())
+            br = new BufferedReader(new FileReader(path + "/dictionary.txt"));
+        else
+            br = new BufferedReader(new FileReader(path + "/dictionary_stemmer.txt"));
         String curr = br.readLine();
         while (curr != null)
         {

@@ -179,6 +179,26 @@ public class ReadFile {
                 bw.write(entry.getValue().toString());
                 bw.newLine();
             }
+            bw.close();
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    /**
+     * Write all the cities objects to the disk
+     * @param postingPath
+     */
+    public void writeLanguagesToDisk(String postingPath)
+    {
+        try{
+            File progData = new File(postingPath + "/ProgramData");
+            if (!progData.exists()) progData.mkdirs();
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(progData + "/Languages.txt"), StandardCharsets.UTF_8));
+            for (String s : allDocsLanguage) {
+                bw.write(s);
+                bw.newLine();
+            }
+            bw.close();
         } catch (IOException e) { e.printStackTrace(); }
     }
 }

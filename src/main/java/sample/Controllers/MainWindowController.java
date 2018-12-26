@@ -129,6 +129,7 @@ public class MainWindowController implements Initializable
         indexer.writeDictionaryToDisk(toStem); // store all the dictionary in disk
         indexer.writeDocumentsToDisk(); // store the documents in disk
         readFile.writeCitiesToDisk(postings_path); // store the cities in disk
+        readFile.writeLanguagesToDisk(postings_path); // store the languages in disk
         try { FileUtils.deleteDirectory(new File(postings_path+"/Temporary Postings")); } // delete all temporary files
         catch (IOException e) { e.printStackTrace(); }
         endTime = System.currentTimeMillis();
@@ -279,11 +280,22 @@ public class MainWindowController implements Initializable
     @FXML
     public void addLanguages()
     {
-        if (readFile == null)
+        File language = new File(postings_path + "/ProgramData/Documents.txt");
+        if (readFile == null && !language.exists())
             return;
         m_languages.maxHeight(100.0);
         m_languages.getItems().clear();
-        HashSet<String> languages = readFile.getAllDocsLanguage();
+        HashSet<String> languages = new HashSet<>();
+        if (language.exists()){
+            try {
+                languages = restoreLanguages();
+            }catch (IOException e){
+                e.getStackTrace();
+            }
+        }
+        else
+            languages = readFile.getAllDocsLanguage();
+
         languages.forEach((lang) -> {
             MenuItem menuItem = new MenuItem(lang);
             m_languages.getItems().add(menuItem);
@@ -421,6 +433,19 @@ public class MainWindowController implements Initializable
         //searcher.relevantDocsFromQueryFile(qFile, hs_citiesSelected, toSemantic);
     }
 
+    private HashSet<String> restoreLanguages() throws IOException
+    {
+        HashSet<String> language = new HashSet<>();
+        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Languages.txt"));
+        String line;
+        while ((line = br.readLine()) != null) {
+            if (!line.isEmpty())
+                language.add(line);
+        }
+        br.close();
+        return language;
+    }
+
     private HashMap<String, Document> restoreDocuments() throws IOException
     {
         HashMap<String, Document> docSet = new HashMap<>();
@@ -448,12 +473,12 @@ public class MainWindowController implements Initializable
         LinkedList<String> list;
 
         while ((line = br.readLine()) != null) {
-            city = line.substring(0, line.indexOf(" : {country="));
-            country = line.substring(line.indexOf(", country='")+10, line.indexOf(", currency='"));
-            currency = line.substring(line.indexOf(", currency='")+11, line.indexOf(", population='"));
-            population = line.substring(line.indexOf(", population='")+13, line.indexOf(", docsRepresent="));
+            city = line.substring(0, line.indexOf(":")-1);
+            country = line.substring(line.indexOf(" country=")+9, line.indexOf(", currency="));
+            currency = line.substring(line.indexOf(", currency=")+11, line.indexOf(", population="));
+            population = line.substring(line.indexOf(", population=")+13, line.indexOf(", docsRepresent="));
 
-            docs = line.substring(line.indexOf(", docsRepresent=")+17, line.length()-2).split(",");
+            docs = line.substring(line.indexOf(", docsRepresent=")+17, line.length()-2).split(", ");
             list = new LinkedList<>(Arrays.asList(docs));
 
             loadedCities.put(city, new City(city, country, currency, population, list));
