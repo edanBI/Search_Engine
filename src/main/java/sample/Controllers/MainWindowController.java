@@ -1,9 +1,5 @@
 package sample.Controllers;
 
-import javafx.beans.property.IntegerProperty;
-import javafx.beans.property.ReadOnlyObjectWrapper;
-import javafx.beans.property.SimpleStringProperty;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -19,12 +15,10 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
-import javafx.util.Callback;
 import org.apache.commons.io.FileUtils;
 import org.controlsfx.control.CheckListView;
 import sample.Models.*;
 
-import javax.print.Doc;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -46,10 +40,9 @@ public class MainWindowController implements Initializable
     private Searcher searcher;
     private Ranker ranker;
 
-    private File qFile;
+    private File queryFile;
 
-    public MainWindowController()
-    {
+    public MainWindowController() {
         toStem = false; toSemantic = false;
 
     }
@@ -63,8 +56,7 @@ public class MainWindowController implements Initializable
         } catch (Exception e) { e.printStackTrace(); }
     }
 
-    private void showAlert()
-    {
+    private void showAlert() {
         Alert alert;
         if (corpus_path == null && postings_path==null)
         {
@@ -80,6 +72,55 @@ public class MainWindowController implements Initializable
             alert = new Alert(Alert.AlertType.ERROR, "Missing Posting Path");
             java.awt.Toolkit.getDefaultToolkit().beep();
             alert.showAndWait();
+        }
+    }
+
+    private HashSet<String> restoreLanguages() throws IOException {
+        HashSet<String> language = new HashSet<>();
+        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Languages.txt"));
+        String line;
+        while ((line = br.readLine()) != null) {
+            if (!line.isEmpty())
+                language.add(line);
+        }
+        br.close();
+        return language;
+    }
+
+    private HashMap<String, Document> restoreDocuments() throws IOException {
+        HashMap<String, Document> docSet = new HashMap<>();
+        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Documents.txt"));
+        String line, docId;
+        int max_tf, unique_words, length;
+        while ((line = br.readLine()) != null) {
+            docId = line.substring(16, line.indexOf(", max_tf="));
+            max_tf = Integer.parseInt(line.substring(line.indexOf(", max_tf=")+9, line.indexOf(", unique_words=")));
+            unique_words = Integer.parseInt(line.substring(line.indexOf(", unique_words=")+15, line.indexOf(", length=")));
+            length = Integer.parseInt(line.substring(line.indexOf(", length=")+9, line.indexOf(", entities=")));
+
+            docSet.put(docId, new Document(docId, max_tf, unique_words, length));
+            docSet.get(docId).setEntities( line.substring(line.indexOf(", entities=") + 11, line.lastIndexOf('}')));
+        }
+
+        return docSet;
+    }
+
+    private void restoreCities() throws IOException {
+        loadedCities = new HashMap<>();
+        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Cities.txt"));
+        String line, city, country, currency, population, docs[];
+        LinkedList<String> list;
+
+        while ((line = br.readLine()) != null) {
+            city = line.substring(0, line.indexOf(":")-1);
+            country = line.substring(line.indexOf(" country=")+9, line.indexOf(", currency="));
+            currency = line.substring(line.indexOf(", currency=")+11, line.indexOf(", population="));
+            population = line.substring(line.indexOf(", population=")+13, line.indexOf(", docsRepresent="));
+
+            docs = line.substring(line.indexOf(", docsRepresent=")+17, line.length()-2).split(", ");
+            list = new LinkedList<>(Arrays.asList(docs));
+
+            loadedCities.put(city, new City(city, country, currency, population, list));
         }
     }
 
@@ -103,7 +144,7 @@ public class MainWindowController implements Initializable
     public Label lbl_resPath;
 
     @FXML
-    public void initDataSet()
+    public void generateDictionaryAndPosting()
     {
         if (corpus_path==null || postings_path==null) {
             showAlert();
@@ -135,10 +176,6 @@ public class MainWindowController implements Initializable
         endTime = System.currentTimeMillis();
         alert.close();
         displaySummary();
-
-        // init for the search phase
-        ranker = new Ranker(indexer.getDictionary(), indexer.getDocsSet());
-        searcher = new Searcher(parser, indexer.getDictionary(), ranker, postings_path);
     }
 
     /**
@@ -146,8 +183,7 @@ public class MainWindowController implements Initializable
      * @param actionEvent when one of the 'Browse' button is selected.
      */
     @FXML
-    public void openDirectoryFileExplorer(ActionEvent actionEvent)
-    {
+    public void openDirectoryFileExplorer(ActionEvent actionEvent) {
         DirectoryChooser dc = new DirectoryChooser();
         //dc.setInitialDirectory(new File("D:\\documents\\users\\benivre\\Downloads"));
         //dc.setInitialDirectory(new File("C:\\Users\\user\\Desktop\\Engine misc"));
@@ -168,25 +204,23 @@ public class MainWindowController implements Initializable
         else if (actionEvent.getSource().equals(btn_resPath) && selectedDir!=null) {
             lbl_resPath.setText("  Results File Path: " + selectedDir.getAbsolutePath() + "\\qrels.txt");
             resQueries_path = selectedDir.getAbsolutePath();
-            searcher.setResPath(resQueries_path);
+            //searcher.setResPath(resQueries_path);
         }
     }
 
     @FXML
-    public void setToStem()
-    {
+    public void setToStem() {
         toStem = chbx_stemming.isSelected();
     }
 
     @FXML
-    public void setToSemantic()
-    {
+    public void setToSemantic() {
         toSemantic = chbx_semantic.isSelected();
     }
 
     @FXML
-    public void reset()
-    {
+    @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
+    public void reset() {
         try {
             File noStemmer = new File(postings_path + "/dictionary.txt");
             File noStemmerDir = new File(postings_path + "/Posting Files");
@@ -210,11 +244,11 @@ public class MainWindowController implements Initializable
         chbx_stemming.setIndeterminate(false);
         toStem = false;
         m_languages.getItems().clear();
+        new Alert(Alert.AlertType.INFORMATION, "All files deleted").showAndWait();
     }
 
     @FXML
-    public void displayDictionary()
-    {
+    public void displayDictionary() {
         if (indexer == null && loadedDictionary==null) {
             new Alert(Alert.AlertType.ERROR, "Dictionary N/A").showAndWait();
             return;
@@ -242,6 +276,7 @@ public class MainWindowController implements Initializable
             clmn_totalFreq.setText("Total Frequency");
             clmn_totalFreq.setMinWidth(200.0);
 
+            //noinspection unchecked
             tbl_dictionary.getColumns().addAll(clmn_terms, clmn_totalFreq);
 
             clmn_terms.setCellValueFactory(data -> data.getValue().getTermProperty());
@@ -263,8 +298,7 @@ public class MainWindowController implements Initializable
     }
 
     @FXML
-    public void loadDictionary()
-    {
+    public void loadDictionary() {
         try {
             String str = txt_postings_path.getText();
             loadedDictionary = Indexer.readDictionaryFromFile(str);
@@ -278,8 +312,7 @@ public class MainWindowController implements Initializable
     }
 
     @FXML
-    public void addLanguages()
-    {
+    public void addLanguages() {
         File language = new File(postings_path + "/ProgramData/Documents.txt");
         if (readFile == null && !language.exists())
             return;
@@ -302,8 +335,7 @@ public class MainWindowController implements Initializable
         });
     }
 
-    private void displaySummary()
-    {
+    private void displaySummary() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Indexing Summary");
         alert.setHeaderText(null);
@@ -318,8 +350,7 @@ public class MainWindowController implements Initializable
     /**
      * display the user a list of cities from the documents in the corpus.
      */
-    public void displayCities()
-    {
+    public void displayCities() {
         try { restoreCities(); }
         catch (IOException e) {
             new Alert(Alert.AlertType.ERROR, "No Cities to display").showAndWait();
@@ -356,14 +387,17 @@ public class MainWindowController implements Initializable
     /**
      * run the query from the text area which the user had typed in.
      */
-    public void runQuery()
-    {
+    public void runQuery() {
         if (loadedDictionary == null) {
             new Alert(Alert.AlertType.ERROR, "Load Dictionary First!").showAndWait();
             return;
         }
         if (postings_path == null || postings_path.length()==0) {
             new Alert(Alert.AlertType.ERROR, "Enter Postings Directory Path!").showAndWait();
+            return;
+        }
+        if (corpus_path == null || corpus_path.length() == 0){
+            new Alert(Alert.AlertType.ERROR, "Enter Corpus Directory Path!").showAndWait();
             return;
         }
         if (txt_queryEntry.getText().length()==0 && txt_queryPath.getText().length()==0) {
@@ -379,14 +413,18 @@ public class MainWindowController implements Initializable
         if (searcher == null) {
             try { ranker = new Ranker(loadedDictionary, restoreDocuments()); }
             catch (IOException e) { e.printStackTrace(); }
-            searcher = new Searcher(new Parser(corpus_path, toStem), loadedDictionary, ranker, postings_path);
+            if (resQueries_path == null || resQueries_path.length() == 0)
+                searcher = new Searcher(new Parser(corpus_path, toStem), loadedDictionary, ranker, postings_path, postings_path);
+            else
+                searcher = new Searcher(new Parser(corpus_path, toStem), loadedDictionary, ranker, postings_path, resQueries_path);
         }
+
         ObservableList<Document> retrievedDocumentsList;
         if (txt_queryEntry.getText().length() > 0) {
             if (hs_citiesSelected==null) hs_citiesSelected=new HashSet<>();
             retrievedDocumentsList = FXCollections.observableArrayList(searcher.relevantDocsFromQuery(txt_queryEntry.getText(), hs_citiesSelected, toSemantic));
         } else {
-            searcher.relevantDocsFromQueryFile(qFile, hs_citiesSelected, toSemantic);
+            searcher.relevantDocsFromQueryFile(queryFile, hs_citiesSelected, toSemantic);
             new Alert(Alert.AlertType.INFORMATION, "IR  completed. Queries result stored in file!").showAndWait();
             return;
         }
@@ -418,70 +456,17 @@ public class MainWindowController implements Initializable
     /**
      * run the query from the file in the path the user had entered.
      */
-    public void browseQueryFile()
-    {
+    public void browseQueryFile() {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().addAll(
                 new FileChooser.ExtensionFilter("TEXT files (*.txt)", "*.txt"),
                 new FileChooser.ExtensionFilter("All files (*)", "*")
         );
-        qFile = fileChooser.showOpenDialog(vBox_mainWindows.getScene().getWindow());
-        if (qFile!=null) {
-            txt_queryPath.setText(qFile.getAbsolutePath());
+        queryFile = fileChooser.showOpenDialog(vBox_mainWindows.getScene().getWindow());
+        if (queryFile !=null) {
+            txt_queryPath.setText(queryFile.getAbsolutePath());
         }
         // run the searcher on the query file
-        //searcher.relevantDocsFromQueryFile(qFile, hs_citiesSelected, toSemantic);
-    }
-
-    private HashSet<String> restoreLanguages() throws IOException
-    {
-        HashSet<String> language = new HashSet<>();
-        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Languages.txt"));
-        String line;
-        while ((line = br.readLine()) != null) {
-            if (!line.isEmpty())
-                language.add(line);
-        }
-        br.close();
-        return language;
-    }
-
-    private HashMap<String, Document> restoreDocuments() throws IOException
-    {
-        HashMap<String, Document> docSet = new HashMap<>();
-        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Documents.txt"));
-        String line, docId;
-        int max_tf, unique_words, length;
-        while ((line = br.readLine()) != null) {
-            docId = line.substring(16, line.indexOf(", max_tf="));
-            max_tf = Integer.parseInt(line.substring(line.indexOf(", max_tf=")+9, line.indexOf(", unique_words=")));
-            unique_words = Integer.parseInt(line.substring(line.indexOf(", unique_words=")+15, line.indexOf(", length=")));
-            length = Integer.parseInt(line.substring(line.indexOf(", length=")+9, line.indexOf(", entities=")));
-
-            docSet.put(docId, new Document(docId, max_tf, unique_words, length));
-            docSet.get(docId).setEntities( line.substring(line.indexOf(", entities=") + 11, line.lastIndexOf('}')));
-        }
-
-        return docSet;
-    }
-
-    private void restoreCities() throws IOException
-    {
-        loadedCities = new HashMap<>();
-        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Cities.txt"));
-        String line, city, country, currency, population, docs[];
-        LinkedList<String> list;
-
-        while ((line = br.readLine()) != null) {
-            city = line.substring(0, line.indexOf(":")-1);
-            country = line.substring(line.indexOf(" country=")+9, line.indexOf(", currency="));
-            currency = line.substring(line.indexOf(", currency=")+11, line.indexOf(", population="));
-            population = line.substring(line.indexOf(", population=")+13, line.indexOf(", docsRepresent="));
-
-            docs = line.substring(line.indexOf(", docsRepresent=")+17, line.length()-2).split(", ");
-            list = new LinkedList<>(Arrays.asList(docs));
-
-            loadedCities.put(city, new City(city, country, currency, population, list));
-        }
+        //searcher.relevantDocsFromQueryFile(queryFile, hs_citiesSelected, toSemantic);
     }
 }

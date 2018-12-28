@@ -19,12 +19,12 @@ public class Searcher {
     private TreeMap<String, DictionaryRecord> dictionary;
     private HashMap<Character, String> postingFiles = new HashMap<>();
 
-    public Searcher(Parser parser, TreeMap<String, DictionaryRecord> dictionary, Ranker ranker, String pathOfPostingFolder) {
+    public Searcher(Parser parser, TreeMap<String, DictionaryRecord> dictionary, Ranker ranker, String pathOfPostingFolder, String resPath) {
         this.parser = parser;
         this.ranker = ranker;
         this.dictionary = dictionary;
         this.pathOfPostingFolder = pathOfPostingFolder;
-        this.resPath = pathOfPostingFolder;
+        this.resPath = resPath;
         initPostingFiles(postingFiles);
     }
 
@@ -34,12 +34,12 @@ public class Searcher {
 
     /**
      * Finds and return the relevant documents for query and write the result to the disk
-     * @param query
-     * @param cities
-     * @param toSemanticTreatment
-     * @return
+     * @param query .
+     * @param cities .
+     * @param toSemanticTreatment .
+     * @return an arraylist of the relevant documents
      */
-    public ArrayList<sample.Models.Document> relevantDocsFromQuery(String query, HashSet<City> cities, boolean toSemanticTreatment){
+    public ArrayList<sample.Models.Document> relevantDocsFromQuery(String query, HashSet<City> cities, boolean toSemanticTreatment) {
         ArrayList<sample.Models.Document> relevantDocs = parseFromQuery(query, cities, toSemanticTreatment);
         //send to write to file function format:"queryNumber + " 0 " + DocNum + " 1 42.38 mt"
         if (!relevantDocs.isEmpty()) {
@@ -51,9 +51,9 @@ public class Searcher {
 
     /**
      * Finds the relevant documents for each query in the query file and write the result to the disk
-     * @param file
-     * @param cities
-     * @param toSemanticTreatment
+     * @param file .
+     * @param cities .
+     * @param toSemanticTreatment .
      */
     public void relevantDocsFromQueryFile(File file, HashSet<City> cities, boolean toSemanticTreatment) {
         HashMap<String, String> readQueryFile = readQueryFile(file);
@@ -69,20 +69,23 @@ public class Searcher {
 
     /**
      *Finds the relevant documents for the given query
-     * @param query
-     * @param cities
-     * @param toSemanticTreatment
-     * @return
+     * @param query .
+     * @param cities .
+     * @param toSemanticTreatment .
+     * @return a sort arraylist containing the top 50 relevant documentsS
      */
     private ArrayList<sample.Models.Document> parseFromQuery(String query, HashSet<City> cities, boolean toSemanticTreatment) {
         HashSet<String> docsByCities = docsByCities(cities);
-        //HashMap for all the terms by docs (K- docId, V- term name ,TermData)
+        // HashMap for all the terms by docs (K- docId, V- term name ,TermData)
         HashMap<String, HashMap<String, TermData>> docsAndTerms = new HashMap<>();
-        //return all the Terms of the query, after parse
+        // return all the Terms of the query, after parse
         List<String> queryTerms = new ArrayList<>(parser.Parsing(query).keySet());
-        //add to the list words with a meaning similar for the given query
-        if (toSemanticTreatment && semanticTreatment(queryTerms) != null)
-            queryTerms.addAll(semanticTreatment(queryTerms));
+        List<String> semanticList = semanticTreatment(queryTerms);
+
+        // add words with a similar meaning to the terms in the given query
+        if (toSemanticTreatment && semanticList != null)
+            queryTerms.addAll(semanticList);
+
         for (String term : queryTerms) {
             //check if the term is in the dictionary
             if (dictionary.containsKey(term) || dictionary.containsKey(term.toUpperCase()) ||
@@ -127,11 +130,11 @@ public class Searcher {
     }
 
     /**
-     * @return random queryNumber
+     * @return a random query number (id)
      */
-    private String queryNum(){
+    private String queryNum() {
         String queryNum = "" + (Searcher.queryID++);
-        while (!queryIDs.contains(queryNum))
+        while (queryIDs.contains(queryNum))
             queryNum = "" + (Searcher.queryID++);
         queryIDs.add(queryNum);
         return queryNum;
@@ -139,8 +142,8 @@ public class Searcher {
 
     /**
      * Write the query result file to disk
-     * @param toWrite
-     * @param queryNumber
+     * @param toWrite .
+     * @param queryNumber .
      */
     private void writeQueryResultToFile(ArrayList<sample.Models.Document> toWrite, String queryNumber) {
         try {
@@ -177,8 +180,8 @@ public class Searcher {
 
     /**
      * Read the query file and split it to query number and the query
-     * @param file
-     * @return
+     * @param file .
+     * @return .
      */
     private HashMap<String, String> readQueryFile(File file) {
         HashMap<String, String> QueryById = new HashMap<>();
@@ -209,10 +212,10 @@ public class Searcher {
 
     /**
      * Return specific lines from the posting file
-     * @param firstLine
-     * @param numOfLines
-     * @param wordToSearch
-     * @return
+     * @param firstLine .
+     * @param numOfLines .
+     * @param wordToSearch .
+     * @return the relevant line from the posting file
      */
     private HashSet<String> postingLines(int firstLine, int numOfLines, String wordToSearch) {
         String filePath;
@@ -243,8 +246,8 @@ public class Searcher {
 
     /**
      * Return all the docs that the cities the func get are in their "104" tag or in the text
-     * @param cities
-     * @return
+     * @param cities .
+     * @return hashset of all the names of the cities
      */
     private HashSet<String> docsByCities(HashSet<City> cities) {
         if (cities==null || cities.isEmpty()) {
@@ -266,9 +269,9 @@ public class Searcher {
     }
 
     /**
-     * Find with Datamuse API words with a meaning similar for the given query
-     * @param queryWords
-     * @return
+     * Find with 'Datamuse' API words with a meaning similar for the given query
+     * @param queryWords .
+     * @return list of similar words which the API found as relevant
      */
     private List<String> semanticTreatment(List<String> queryWords) {
         if (queryWords.isEmpty()) {

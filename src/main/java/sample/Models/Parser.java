@@ -20,8 +20,8 @@ public class Parser {
     }
 
     /**
-     * Fill the stopWords HashSet in stop words for this corpos
-     * @param path
+     * Fill the stopWords HashSet in stop words for this corpus
+     * @param path .
      */
     private void stopWordsFromFile(String path) {
         try {

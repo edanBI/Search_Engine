@@ -2,8 +2,13 @@
   <dictionary name="user">
     <words>
       <w>avgdl</w>
+      <w>benivre</w>
       <w>chbx</w>
+      <w>clmn</w>
+      <w>corpos</w>
       <w>currencycode</w>
+      <w>datamuse</w>
+      <w>docid</w>
       <w>docno</w>
       <w>geobytes</w>
       <w>hashset</w>

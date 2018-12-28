@@ -46,12 +46,18 @@ public class Ranker {
 
             // calc BM25 formula foreach word w in the intersection set
             for (String w : intersect) {
+
+                // BM25 calculations
                 c_w_d = docEntry.getValue().get(w).gettF();
                 w_score = (k1 + 1) * c_w_d * dictionary.get(w).getIdf();
                 w_score /= c_w_d + k1 * (1 - b + b * (documents.get(docEntry.getKey()).getLength() / avgdl));
-                // give the word a bigger weight if it was tagged as important while parsing
+
+                // cosine calculations
+
+                // isImportant calculation
                 if (docEntry.getValue().get(w).getImportant())
                     w_score *= 1.5;
+
                 // update the total sum
                 score += w_score;
             }

@@ -53,7 +53,7 @@
                                 <MenuItem mnemonicParsing="false" text="none" />
                             </items>
                         </MenuButton>
-                        <Button fx:id="btn_generate" layoutX="238.0" layoutY="3.0" mnemonicParsing="false" onAction="#initDataSet" prefHeight="31.0" prefWidth="318.0" text="Generate Dictionary &amp; Posting" textAlignment="JUSTIFY" />
+                        <Button fx:id="btn_generate" layoutX="238.0" layoutY="3.0" mnemonicParsing="false" onAction="#generateDictionaryAndPosting" prefHeight="31.0" prefWidth="318.0" text="Generate Dictionary &amp; Posting" textAlignment="JUSTIFY" />
                     </children>
                 </AnchorPane>
                 <AnchorPane layoutX="10.0" layoutY="252.0" prefHeight="15.0" prefWidth="746.0" />
