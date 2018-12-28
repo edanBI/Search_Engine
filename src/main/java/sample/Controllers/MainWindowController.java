@@ -305,6 +305,7 @@ public class MainWindowController implements Initializable
         try {
             String str = txt_postings_path.getText();
             loadedDictionary = Indexer.readDictionaryFromFile(str);
+            postings_path = lbl_posting_path;
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Dictionary Loaded");
             alert.show();
         } catch (IOException e) {
@@ -395,7 +396,7 @@ public class MainWindowController implements Initializable
             new Alert(Alert.AlertType.ERROR, "Load Dictionary First!").showAndWait();
             return;
         }
-        if (postings_path == null || postings_path.length()==0) {
+        if (lbl_posting_path == null || lbl_posting_path.length()==0) {
             new Alert(Alert.AlertType.ERROR, "Enter Postings Directory Path!").showAndWait();
             return;
         }

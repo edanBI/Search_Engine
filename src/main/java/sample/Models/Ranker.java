@@ -30,9 +30,11 @@ public class Ranker {
 
         // calculate each document score
         for (Map.Entry<String, Document> d : documents.entrySet()) {
+            if (!docsAndTerms.containsKey(d.getKey()))
+                continue;
             intersectionSet = new HashMap<>();
             for (String q : queryTerms){
-                if (docsAndTerms.get(d.getKey()).containsKey((q)))
+                if (docsAndTerms.get(d.getKey()).containsKey(q))
                     intersectionSet.put(q, docsAndTerms.get(d.getKey()).get(q));
             }
 
@@ -86,18 +88,20 @@ public class Ranker {
     // return a map sorted by VALUE
     private Map<Document, Double> sortedMap(HashMap<String, Double> unsorted) {
         List<Map.Entry<String, Double>> list = new ArrayList<>(unsorted.entrySet());
-        list.sort(new Comparator<Map.Entry<String, Double>>() {
+        list.sort(Map.Entry.comparingByValue());
+        /*list.sort(new Comparator<Map.Entry<String, Double>>() {
             @Override
             public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) {
                 if (o1.getValue() > o2.getValue()) return -1;
                 else if (o1.getValue().equals(o2.getValue())) return 0;
                 else return 1;
             }
-        });
+        });*/
 
         Map<Document, Double> sorted = new LinkedHashMap<>();
-        for (Map.Entry<String, Double> entry : list) {
-            sorted.put(documents.get(entry.getKey()), entry.getValue());
+        for (int i=list.size()-1; i>0; i--) {
+//            sorted.put(documents.get(entry.getKey()), entry.getValue());
+            sorted.put(documents.get(list.remove(i).getKey()), list.remove(i).getValue());
         }
         return sorted;
     }
