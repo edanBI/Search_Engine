@@ -52,7 +52,7 @@ public class TermData {
         this.tF = tF;
     }
 
-    public Boolean getImportant() {
+    public boolean getImportant() {
         return isImportant;
     }
 

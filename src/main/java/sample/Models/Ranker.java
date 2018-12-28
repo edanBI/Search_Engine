@@ -17,53 +17,33 @@ public class Ranker {
         avgdl = avgdl / this.documents.size();
     }
 
-    // TODO need to add cosine formula
     /**
      * calc the ranking score foreach document
      * @param queryTerms is the query
      * @return 50 documents with the highest score
      */
     ArrayList<Document> rank(List<String> queryTerms, HashMap<String, HashMap<String, TermData>> docsAndTerms) {
-        // BM25 constants
-        final double k1 = 0.75;
-        final double b = 1.2;
-
-        //       <docId , rankVal>
+        //      <docId, rankVal>
+        double score, bm25, tf_idf_cosine;
         HashMap<String, Double> hash_scores = new HashMap<>();
-        Set<String> intersect;
-        double score, w_score;
-        int c_w_d;
+        HashMap<String, TermData> intersectionSet;
 
-        for (Map.Entry<String, HashMap<String, TermData>> docEntry : docsAndTerms.entrySet()) {
-            intersect = new HashSet<>();
-            score = 0.0;
-
-            // create the set of all the word which are both in the document and the query
-            for (String q : queryTerms) {
-                if (docEntry.getValue().containsKey(q))
-                    intersect.add(q);
+        // calculate each document score
+        for (Map.Entry<String, Document> d : documents.entrySet()) {
+            intersectionSet = new HashMap<>();
+            for (String q : queryTerms){
+                if (docsAndTerms.get(d.getKey()).containsKey((q)))
+                    intersectionSet.put(q, docsAndTerms.get(d.getKey()).get(q));
             }
 
-            // calc BM25 formula foreach word w in the intersection set
-            for (String w : intersect) {
+            bm25 = BM25(intersectionSet, d.getValue());
+            tf_idf_cosine = TF_IDF_Cosine(docsAndTerms.get(d.getKey()), d.getKey(), queryTerms);
 
-                // BM25 calculations
-                c_w_d = docEntry.getValue().get(w).gettF();
-                w_score = (k1 + 1) * c_w_d * dictionary.get(w).getIdf();
-                w_score /= c_w_d + k1 * (1 - b + b * (documents.get(docEntry.getKey()).getLength() / avgdl));
-
-                // cosine calculations
-
-                // isImportant calculation
-                if (docEntry.getValue().get(w).getImportant())
-                    w_score *= 1.5;
-
-                // update the total sum
-                score += w_score;
-            }
-            hash_scores.put(docEntry.getKey(), score);
+            score = 0.6*bm25 + 0.4*tf_idf_cosine;
+            hash_scores.put(d.getKey(), score);
         }
 
+        // get the top 50's in hash_scores
         ArrayList<Document> ranked_arr = new ArrayList<>(50);
         Map<Document, Double> map = sortedMap(hash_scores);
         Object[] sorted = map.keySet().toArray();
@@ -72,6 +52,35 @@ public class Ranker {
             ranked_arr.add((Document) sorted[i]);
         }
         return ranked_arr;
+    }
+
+    private double TF_IDF_Cosine(HashMap<String, TermData> docTerms, String docId, List<String> query) {
+        double w_ij, w_iq, lowerSum, sum2_wij = 0.0, sum2_wiq = 0.0, upperSum = 0.0;
+
+        for(Map.Entry<String, TermData> docTerm : docTerms.entrySet()){
+            w_ij = (docTerm.getValue().gettF() / (double)documents.get(docId).getMax_tf()) * (dictionary.get(docTerm.getKey()).getIdf());
+            w_iq = query.contains(docTerm.getKey()) ? 1 : 0;
+            upperSum += w_ij * w_iq;
+
+            sum2_wij += Math.pow(w_ij, 2);
+            sum2_wiq += Math.pow(w_iq, 2);
+        }
+
+        lowerSum = Math.sqrt(sum2_wij * sum2_wiq);
+
+        return upperSum / lowerSum;
+    }
+
+    private double BM25(HashMap<String, TermData> intersectionSet, Document d) {
+        final double k1 = 0.75; final double b = 1.2; // bm25 constants
+        double score = 0.0, tmp;
+
+        for(Map.Entry<String, TermData> w : intersectionSet.entrySet()) {
+            tmp = dictionary.get(w.getKey()).getIdf() * (k1+1) * w.getValue().gettF();
+            tmp /= w.getValue().gettF() + k1 * (1 - b + b * (d.getLength() / avgdl));
+            score = w.getValue().getImportant() ? (tmp*2) : tmp; // if it's an important term then it's weight will double
+        }
+        return score;
     }
 
     // return a map sorted by VALUE
