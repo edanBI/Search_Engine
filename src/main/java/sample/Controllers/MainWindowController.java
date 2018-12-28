@@ -30,7 +30,7 @@ public class MainWindowController implements Initializable
 {
     private boolean toStem, toSemantic;
     private long startTime, endTime;
-    private String corpus_path, postings_path, resQueries_path;
+    private String corpus_path, postings_path, lbl_posting_path, resQueries_path;
     private HashSet<City> hs_citiesSelected;
     private TreeMap<String, DictionaryRecord> loadedDictionary;
     private HashMap<String, City> loadedCities;
@@ -146,7 +146,7 @@ public class MainWindowController implements Initializable
     @FXML
     public void generateDictionaryAndPosting()
     {
-        if (corpus_path==null || postings_path==null) {
+        if (corpus_path==null || lbl_posting_path==null) {
             showAlert();
             return;
         }
@@ -155,6 +155,18 @@ public class MainWindowController implements Initializable
         startTime = System.currentTimeMillis();
         readFile = new ReadFile(corpus_path);
         Parser parser = new Parser(corpus_path+"/stop_words.txt", toStem);
+        File postingDir;
+        // create the directory
+        if (toStem) {
+            postings_path = lbl_posting_path + "/Posting With Stemmer";
+            postingDir = new File(postings_path);
+        }
+        else {
+            postings_path = lbl_posting_path + "/Posting Without Stemmer";
+            postingDir = new File(postings_path);
+        }
+        if (!postingDir.exists()) postingDir.mkdirs();
+
         indexer = new Indexer(postings_path);
         indexer.indexCities(readFile.getAllDocsCity());
         HashMap<String,String> files;//will be fill by docid and text of the files
@@ -197,7 +209,7 @@ public class MainWindowController implements Initializable
         }
         else if (actionEvent.getSource().equals(btn_postings_browse) && selectedDir!=null)
         {
-            postings_path = selectedDir.getPath();
+            lbl_posting_path = selectedDir.getPath();
             txt_postings_path.setText(selectedDir.getAbsolutePath());
             txt_postings_path.setDisable(true);
         }
@@ -222,18 +234,9 @@ public class MainWindowController implements Initializable
     @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
     public void reset() {
         try {
-            File noStemmer = new File(postings_path + "/dictionary.txt");
-            File noStemmerDir = new File(postings_path + "/Posting Files");
-            File stemmer = new File(postings_path + "/dictionary_stemmer.txt");
-            File stemmerDir = new File(postings_path + "/Posting Files_stemmer");
-            if (noStemmer.exists())
-                noStemmer.delete();
-            if (stemmer.exists())
-                stemmer.delete();
-            if (noStemmerDir.exists())
-                FileUtils.deleteDirectory(noStemmerDir);
-            if (stemmerDir.exists())
-                FileUtils.deleteDirectory(stemmerDir);
+            File Posting_dir = new File(postings_path);
+            if (Posting_dir.exists())
+                FileUtils.deleteDirectory(Posting_dir);
         }
         catch (IOException e) { e.printStackTrace(); }
         txt_corpus_path.clear();
@@ -244,7 +247,7 @@ public class MainWindowController implements Initializable
         chbx_stemming.setIndeterminate(false);
         toStem = false;
         m_languages.getItems().clear();
-        new Alert(Alert.AlertType.INFORMATION, "All files deleted").showAndWait();
+        new Alert(Alert.AlertType.INFORMATION, "Reset Completed").showAndWait();
     }
 
     @FXML
@@ -413,10 +416,14 @@ public class MainWindowController implements Initializable
         if (searcher == null) {
             try { ranker = new Ranker(loadedDictionary, restoreDocuments()); }
             catch (IOException e) { e.printStackTrace(); }
+            File whichDictionary = new File(postings_path+"/dictionary_stemmer.txt");
+            boolean stem;
+            if (whichDictionary.exists()) stem = true;
+            else stem =false;
             if (resQueries_path == null || resQueries_path.length() == 0)
-                searcher = new Searcher(new Parser(corpus_path, toStem), loadedDictionary, ranker, postings_path, postings_path);
+                searcher = new Searcher(new Parser(corpus_path, stem), loadedDictionary, ranker, postings_path, postings_path);
             else
-                searcher = new Searcher(new Parser(corpus_path, toStem), loadedDictionary, ranker, postings_path, resQueries_path);
+                searcher = new Searcher(new Parser(corpus_path, stem), loadedDictionary, ranker, postings_path, resQueries_path);
         }
 
         ObservableList<Document> retrievedDocumentsList;
