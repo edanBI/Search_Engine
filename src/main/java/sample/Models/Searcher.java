@@ -300,6 +300,7 @@ public class Searcher {
             in.close();
             if (stringBuilder.length() > 0) {
                 for (int i = 0; i < numOfWordToImport; i++) {
+                    // TODO Caused by: java.lang.StringIndexOutOfBoundsException: String index out of range: -8
                     word = stringBuilder.substring(stringBuilder.toString().indexOf("\"word\":\"") + 8, stringBuilder.toString().indexOf("\",\""));
                     similarWord.add(word);
                     stringBuilder.delete(0, stringBuilder.indexOf("},{\"word\":") + 3);

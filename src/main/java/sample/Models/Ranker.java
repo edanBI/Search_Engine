@@ -1,6 +1,5 @@
 package sample.Models;
 
-import javax.print.Doc;
 import java.util.*;
 
 public class Ranker {
@@ -49,8 +48,8 @@ public class Ranker {
         ArrayList<Document> ranked_arr = new ArrayList<>(50);
         Map<Document, Double> map = sortedMap(hash_scores);
         Object[] sorted = map.keySet().toArray();
-//        Object[] sorted = sortedMap(hash_scores).keySet().toArray();
-        for (int i = 0; i < 50 && i < sorted.length; i++) {
+        int size = sorted.length > 50 ? 50 : sorted.length;
+        for (int i = 0; i < size; i++) {
             ranked_arr.add((Document) sorted[i]);
         }
         return ranked_arr;
@@ -89,20 +88,22 @@ public class Ranker {
     private Map<Document, Double> sortedMap(HashMap<String, Double> unsorted) {
         List<Map.Entry<String, Double>> list = new ArrayList<>(unsorted.entrySet());
         list.sort(Map.Entry.comparingByValue());
-        /*list.sort(new Comparator<Map.Entry<String, Double>>() {
-            @Override
-            public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) {
-                if (o1.getValue() > o2.getValue()) return -1;
-                else if (o1.getValue().equals(o2.getValue())) return 0;
-                else return 1;
-            }
-        });*/
 
+        Map.Entry<String, Double> curr;
         Map<Document, Double> sorted = new LinkedHashMap<>();
         for (int i=list.size()-1; i>0; i--) {
-//            sorted.put(documents.get(entry.getKey()), entry.getValue());
-            sorted.put(documents.get(list.remove(i).getKey()), list.remove(i).getValue());
+                curr = list.remove(i);
+            sorted.put(documents.get(curr.getKey()), curr.getValue());
         }
         return sorted;
     }
 }
+
+/*list.sort(new Comparator<Map.Entry<String, Double>>() {
+    @Override
+    public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) {
+        if (o1.getValue() > o2.getValue()) return -1;
+        else if (o1.getValue().equals(o2.getValue())) return 0;
+        else return 1;
+    }
+});*/
