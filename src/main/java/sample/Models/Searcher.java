@@ -80,7 +80,7 @@ public class Searcher {
         HashMap<String, HashMap<String, TermData>> docsAndTerms = new HashMap<>();
         // return all the Terms of the query, after parse
         List<String> queryTerms = new ArrayList<>(parser.Parsing(query).keySet());
-        List<String> semanticList = semanticTreatment(queryTerms);
+        List<String> semanticList = toSemanticTreatment ? semanticTreatment(queryTerms) : null;
 
         // add words with a similar meaning to the terms in the given query
         if (toSemanticTreatment && semanticList != null)
@@ -147,7 +147,7 @@ public class Searcher {
      */
     private void writeQueryResultToFile(ArrayList<sample.Models.Document> toWrite, String queryNumber) {
         try {
-            File query_file = new File(resPath + "\\qrels.txt");
+            File query_file = new File(resPath + "\\results.txt");
             if (!query_file.exists()) {
                 BufferedWriter br = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(query_file), StandardCharsets.UTF_8));
                 toWrite.forEach((doc) -> {

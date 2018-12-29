@@ -143,9 +143,10 @@ public class MainWindowController implements Initializable
     public MenuButton m_languages;
     public Label lbl_resPath;
 
-    @FXML
-    public void generateDictionaryAndPosting()
-    {
+    /**
+     * this method generates the dictionary and posting files.
+     */
+    public void generateDictionaryAndPosting() {
         if (corpus_path==null || lbl_posting_path==null) {
             showAlert();
             return;
@@ -165,7 +166,10 @@ public class MainWindowController implements Initializable
             postings_path = lbl_posting_path + "/Posting Without Stemmer";
             postingDir = new File(postings_path);
         }
-        if (!postingDir.exists()) postingDir.mkdirs();
+        if (!postingDir.exists()) {
+            //noinspection ResultOfMethodCallIgnored
+            postingDir.mkdirs();
+        }
 
         indexer = new Indexer(postings_path);
         indexer.indexCities(readFile.getAllDocsCity());
@@ -194,7 +198,6 @@ public class MainWindowController implements Initializable
      * Open the file explorer window, Enable the user to choose a directory.
      * @param actionEvent when one of the 'Browse' button is selected.
      */
-    @FXML
     public void openDirectoryFileExplorer(ActionEvent actionEvent) {
         DirectoryChooser dc = new DirectoryChooser();
         //dc.setInitialDirectory(new File("D:\\documents\\users\\benivre\\Downloads"));
@@ -214,24 +217,32 @@ public class MainWindowController implements Initializable
             txt_postings_path.setDisable(true);
         }
         else if (actionEvent.getSource().equals(btn_resPath) && selectedDir!=null) {
-            lbl_resPath.setText("  Results File Path: " + selectedDir.getAbsolutePath() + "\\qrels.txt");
+            lbl_resPath.setText("  Results File Path: " + selectedDir.getAbsolutePath() + "\\results.txt");
             resQueries_path = selectedDir.getAbsolutePath();
-            //searcher.setResPath(resQueries_path);
         }
     }
 
-    @FXML
+    /**
+     * when the user check the stemming box, toStem value will be true.
+     * when the user uncheck the stemming box, toStem value will be false.
+     */
     public void setToStem() {
         toStem = chbx_stemming.isSelected();
     }
 
-    @FXML
+    /**
+     * when the user check the semantic box, toSemantic value will be true.
+     * when the user uncheck the semantic box, toSemantic value will be false.
+     */
     public void setToSemantic() {
         toSemantic = chbx_semantic.isSelected();
     }
 
-    @FXML
-    @SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
+    /**
+     * reset action deletes all the files created by the application and restore it to
+     * the initial state, meaning all text and check boxes are cleared.
+     * SuppressWarnings({"unchecked", "ResultOfMethodCallIgnored"})
+    */
     public void reset() {
         try {
             File Posting_dir = new File(postings_path);
@@ -250,7 +261,9 @@ public class MainWindowController implements Initializable
         new Alert(Alert.AlertType.INFORMATION, "Reset Completed").showAndWait();
     }
 
-    @FXML
+    /**
+     * display the dictionary to the user in a table.
+     */
     public void displayDictionary() {
         if (indexer == null && loadedDictionary==null) {
             new Alert(Alert.AlertType.ERROR, "Dictionary N/A").showAndWait();
@@ -300,7 +313,9 @@ public class MainWindowController implements Initializable
         }
     }
 
-    @FXML
+    /**
+     * loads the dictionary form the directory which its path is in the posting files text box
+     */
     public void loadDictionary() {
         try {
             String str = txt_postings_path.getText();
@@ -315,7 +330,10 @@ public class MainWindowController implements Initializable
         }
     }
 
-    @FXML
+    /**
+     * add languages to the list will be presented to the user.
+     * the languages values are read from a file in the program directory in the postings file directory
+     */
     public void addLanguages() {
         File language = new File(postings_path + "/ProgramData/Documents.txt");
         if (readFile == null && !language.exists())
@@ -339,6 +357,10 @@ public class MainWindowController implements Initializable
         });
     }
 
+    /**
+     * display the user a summary of the 'generate dictionary and posting files' process.
+     * including #terms, #doc, time(min), time(sec)
+     */
     private void displaySummary() {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle("Indexing Summary");
@@ -367,18 +389,16 @@ public class MainWindowController implements Initializable
 
         Stage window = new Stage();
         CheckListView<String> checkListView = new CheckListView<>(list);
-        checkListView.getCheckModel().getCheckedItems().addListener(new ListChangeListener<String>() {
-            public void onChanged(ListChangeListener.Change<? extends String> c) {
-                hs_citiesSelected = new HashSet<>();
-                ObservableList<String> selected = checkListView.getCheckModel().getCheckedItems();
-                if (readFile!=null) {
-                    for (String city : selected) {
-                        hs_citiesSelected.add(readFile.getAllDocsCity().get(city));
-                    }
-                } else {
-                    for (String city : selected)
-                        hs_citiesSelected.add(loadedCities.get(city));
+        checkListView.getCheckModel().getCheckedItems().addListener((ListChangeListener<String>) c -> {
+            hs_citiesSelected = new HashSet<>();
+            ObservableList<String> selected = checkListView.getCheckModel().getCheckedItems();
+            if (readFile!=null) {
+                for (String city : selected) {
+                    hs_citiesSelected.add(readFile.getAllDocsCity().get(city));
                 }
+            } else {
+                for (String city : selected)
+                    hs_citiesSelected.add(loadedCities.get(city));
             }
         });
 
@@ -417,10 +437,10 @@ public class MainWindowController implements Initializable
         if (searcher == null) {
             try { ranker = new Ranker(loadedDictionary, restoreDocuments()); }
             catch (IOException e) { e.printStackTrace(); }
+
             File whichDictionary = new File(postings_path+"/dictionary_stemmer.txt");
-            boolean stem;
-            if (whichDictionary.exists()) stem = true;
-            else stem =false;
+            boolean stem = whichDictionary.exists();
+
             if (resQueries_path == null || resQueries_path.length() == 0)
                 searcher = new Searcher(new Parser(corpus_path, stem), loadedDictionary, ranker, postings_path, postings_path);
             else
@@ -444,6 +464,7 @@ public class MainWindowController implements Initializable
         TableColumn<Document, String> col_ids = new TableColumn<>("Document ID");
         TableColumn col_entities = new TableColumn<>("Display Entities");
         tbl.getColumns().add(col_ids);
+        //noinspection unchecked
         tbl.getColumns().add(col_entities);
 
         col_ids.setCellValueFactory(data -> data.getValue().getPropertyDoc_id());

@@ -13,7 +13,7 @@ public class Ranker {
 
         // calc the average document length
         this.documents.forEach((id, doc) -> avgdl += doc.getLength());
-        avgdl = avgdl / this.documents.size();
+        avgdl /= this.documents.size();
     }
 
     /**
@@ -41,6 +41,7 @@ public class Ranker {
             tf_idf_cosine = TF_IDF_Cosine(docsAndTerms.get(d.getKey()), d.getKey(), queryTerms);
 
             score = 0.6*bm25 + 0.4*tf_idf_cosine;
+            //score = bm25;
             hash_scores.put(d.getKey(), score);
         }
 
@@ -73,13 +74,14 @@ public class Ranker {
     }
 
     private double BM25(HashMap<String, TermData> intersectionSet, Document d) {
-        final double k1 = 0.75; final double b = 1.2; // bm25 constants
+        final double k1 = 0.75; final double b = 1.3; // bm25 constants
         double score = 0.0, tmp;
 
         for(Map.Entry<String, TermData> w : intersectionSet.entrySet()) {
-            tmp = dictionary.get(w.getKey()).getIdf() * (k1+1) * w.getValue().gettF();
-            tmp /= w.getValue().gettF() + k1 * (1 - b + b * (d.getLength() / avgdl));
-            score = w.getValue().getImportant() ? (tmp*2) : tmp; // if it's an important term then it's weight will double
+            double idf = dictionary.get(w.getKey()).getIdf();
+            tmp =  (k1+1) * w.getValue().gettF() * idf;
+            tmp /= w.getValue().gettF() + k1 * ( (1 - b) + b * ( (double)d.getLength() / avgdl));
+            score += w.getValue().getImportant() ? (tmp*2) : tmp; // if it's an important term then it's weight will double
         }
         return score;
     }
