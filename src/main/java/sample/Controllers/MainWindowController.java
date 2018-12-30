@@ -1,8 +1,10 @@
 package sample.Controllers;
 
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
@@ -142,6 +144,7 @@ public class MainWindowController implements Initializable
     public ImageView imageView_logo;
     public MenuButton m_languages;
     public Label lbl_resPath;
+    public Label lbl_status;
 
     /**
      * this method generates the dictionary and posting files.
@@ -151,8 +154,34 @@ public class MainWindowController implements Initializable
             showAlert();
             return;
         }
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...");
-        alert.show();
+        /*Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...");
+        alert.show();*/
+
+        /*lbl_status.setText("Parsing and Indexing");
+        Task<Void> task = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                updateMessage(".");
+                Thread.sleep(1000);
+                updateMessage("..");
+                Thread.sleep(1000);
+                updateMessage("....");
+                Thread.sleep(1000);
+                return null;
+            }
+        };
+        lbl_status.textProperty().bind(task.messageProperty());
+
+        task.setOnSucceeded(e -> {
+            lbl_status.textProperty().unbind();
+            // this message will be seen.
+            lbl_status.setText("operation completed successfully");
+        });
+
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();*/
+
         startTime = System.currentTimeMillis();
         readFile = new ReadFile(corpus_path);
         Parser parser = new Parser(corpus_path+"/stop_words.txt", toStem);
@@ -190,7 +219,8 @@ public class MainWindowController implements Initializable
         try { FileUtils.deleteDirectory(new File(postings_path+"/Temporary Postings")); } // delete all temporary files
         catch (IOException e) { e.printStackTrace(); }
         endTime = System.currentTimeMillis();
-        alert.close();
+
+        //alert.close();
         displaySummary();
     }
 
@@ -412,6 +442,10 @@ public class MainWindowController implements Initializable
      * run the query from the text area which the user had typed in.
      */
     public void runQuery() {
+        if (indexer!=null) {
+            loadedDictionary = indexer.getDictionary();
+        }
+
         if (loadedDictionary == null) {
             new Alert(Alert.AlertType.ERROR, "Load Dictionary First!").showAndWait();
             return;
@@ -435,16 +469,16 @@ public class MainWindowController implements Initializable
 
         // get the ranked documents
         if (searcher == null) {
-            try { ranker = new Ranker(loadedDictionary, restoreDocuments()); }
+            try { ranker = new Ranker(loadedDictionary, restoreDocuments(), postings_path); }
             catch (IOException e) { e.printStackTrace(); }
 
-            File whichDictionary = new File(postings_path+"/dictionary_stemmer.txt");
+            File whichDictionary = new File(postings_path+"\\dictionary_stemmer.txt");
             boolean stem = whichDictionary.exists();
 
             if (resQueries_path == null || resQueries_path.length() == 0)
-                searcher = new Searcher(new Parser(corpus_path, stem), loadedDictionary, ranker, postings_path, postings_path);
+                searcher = new Searcher(new Parser(corpus_path+"\\stop_words.txt", stem), loadedDictionary, ranker, postings_path, postings_path);
             else
-                searcher = new Searcher(new Parser(corpus_path, stem), loadedDictionary, ranker, postings_path, resQueries_path);
+                searcher = new Searcher(new Parser(corpus_path+"\\stop_words.txt", stem), loadedDictionary, ranker, postings_path, resQueries_path);
         }
 
         ObservableList<Document> retrievedDocumentsList;

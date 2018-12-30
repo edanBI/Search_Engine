@@ -56,7 +56,7 @@ public class Searcher {
      * @param toSemanticTreatment .
      */
     public void relevantDocsFromQueryFile(File file, HashSet<City> cities, boolean toSemanticTreatment) {
-        HashMap<String, String> readQueryFile = readQueryFile(file);
+        TreeMap<String, String> readQueryFile = readQueryFile(file);
         for (String queryNumber : readQueryFile.keySet()) {
             ArrayList<sample.Models.Document> relevantDocs = parseFromQuery(readQueryFile.get(queryNumber), cities, toSemanticTreatment);
             //send to write to file function format:" query + " 0 " + DocNum +" 1 42.38 mt"
@@ -183,8 +183,8 @@ public class Searcher {
      * @param file .
      * @return .
      */
-    private HashMap<String, String> readQueryFile(File file) {
-        HashMap<String, String> QueryById = new HashMap<>();
+    private TreeMap<String, String> readQueryFile(File file) {
+        TreeMap<String, String> QueryById = new TreeMap<>();
         try {
             Document document = Jsoup.parse(file, "UTF-8");
             Elements docs = document.getElementsByTag("top");
@@ -202,7 +202,17 @@ public class Searcher {
                 queryText = queryText.substring(7, queryText.indexOf("</title>"));
                 queryText = queryText.trim();
 
-                QueryById.put(qId, queryText);
+                //Query description by <desc> tag
+                String e="";
+                if (!element.getElementsByTag("desc").toString().isEmpty()){
+                    e = element.getElementsByTag("desc").toString();
+                    if (e.contains("<narr>")) {
+                        e = e.substring(e.indexOf("Description:") + 12, e.indexOf("<narr>"));
+                    }else
+                        e = e.substring(e.indexOf("Description:") + 12, e.indexOf("</desc>"));
+                    e = e.trim();
+                }
+                QueryById.put(qId, queryText+" "+e);
             }
         } catch (IOException e) {
             e.getStackTrace();
@@ -298,9 +308,8 @@ public class Searcher {
             while ((inputLine = in.readLine()) != null)
                 stringBuilder.append(inputLine);
             in.close();
-            if (stringBuilder.length() > 0) {
+            if (stringBuilder.length() > 10) {
                 for (int i = 0; i < numOfWordToImport; i++) {
-                    // TODO Caused by: java.lang.StringIndexOutOfBoundsException: String index out of range: -8
                     word = stringBuilder.substring(stringBuilder.toString().indexOf("\"word\":\"") + 8, stringBuilder.toString().indexOf("\",\""));
                     similarWord.add(word);
                     stringBuilder.delete(0, stringBuilder.indexOf("},{\"word\":") + 3);

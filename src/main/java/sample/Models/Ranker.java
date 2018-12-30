@@ -1,15 +1,20 @@
 package sample.Models;
 
+import java.io.BufferedReader;
+import java.io.FileReader;
+import java.io.IOException;
 import java.util.*;
 
 public class Ranker {
     private TreeMap<String, DictionaryRecord> dictionary;
     private HashMap<String, Document> documents;
+    private String docsTermTfPath;
     private double avgdl;
 
-    public Ranker(TreeMap<String, DictionaryRecord> dictionary, HashMap<String, Document> documents) {
+    public Ranker(TreeMap<String, DictionaryRecord> dictionary, HashMap<String, Document> documents, String postingPath) {
         this.dictionary = dictionary;
         this.documents = documents;
+        this.docsTermTfPath = postingPath + "/ProgramData/Documents-Term-TF/";
 
         // calc the average document length
         this.documents.forEach((id, doc) -> avgdl += doc.getLength());
@@ -21,28 +26,25 @@ public class Ranker {
      * @param queryTerms is the query
      * @return 50 documents with the highest score
      */
-    ArrayList<Document> rank(List<String> queryTerms, HashMap<String, HashMap<String, TermData>> docsAndTerms) {
+    ArrayList<Document> rank(/*List<String> restTerms, */List<String> queryTerms, HashMap<String, HashMap<String, TermData>> docsAndTerms) {
         //      <docId, rankVal>
         double score, bm25, tf_idf_cosine;
         HashMap<String, Double> hash_scores = new HashMap<>();
-        HashMap<String, TermData> intersectionSet;
 
         // calculate each document score
         for (Map.Entry<String, Document> d : documents.entrySet()) {
-            if (!docsAndTerms.containsKey(d.getKey()))
-                continue;
-            intersectionSet = new HashMap<>();
-            for (String q : queryTerms){
-                if (docsAndTerms.get(d.getKey()).containsKey(q))
-                    intersectionSet.put(q, docsAndTerms.get(d.getKey()).get(q));
+            if (!docsAndTerms.containsKey(d.getKey())) {
+                hash_scores.put(d.getKey(), 0.0); // because Count(w,d)==0
             }
+            else {
+                bm25 = BM25(docsAndTerms.get(d.getKey()), d.getValue()/*,restTerms*/);
+                tf_idf_cosine = TF_IDF_Cosine(docsAndTerms.get(d.getKey()), d.getKey(), queryTerms);
 
-            bm25 = BM25(intersectionSet, d.getValue());
-            tf_idf_cosine = TF_IDF_Cosine(docsAndTerms.get(d.getKey()), d.getKey(), queryTerms);
-
-            score = 0.6*bm25 + 0.4*tf_idf_cosine;
-            //score = bm25;
-            hash_scores.put(d.getKey(), score);
+                score = 0.6*(bm25) + 0.4*(tf_idf_cosine);
+                //score = bm25;
+                //score = tf_idf_cosine;
+                hash_scores.put(d.getKey(), score);
+            }
         }
 
         // get the top 50's in hash_scores
@@ -57,31 +59,34 @@ public class Ranker {
     }
 
     private double TF_IDF_Cosine(HashMap<String, TermData> docTerms, String docId, List<String> query) {
-        double w_ij, w_iq, lowerSum, sum2_wij = 0.0, sum2_wiq = 0.0, upperSum = 0.0;
+        double lowerSum, upperSum = 0.0, idf, tf, max_tf;
 
-        for(Map.Entry<String, TermData> docTerm : docTerms.entrySet()){
-            w_ij = (docTerm.getValue().gettF() / (double)documents.get(docId).getMax_tf()) * (dictionary.get(docTerm.getKey()).getIdf());
-            w_iq = query.contains(docTerm.getKey()) ? 1 : 0;
-            upperSum += w_ij * w_iq;
-
-            sum2_wij += Math.pow(w_ij, 2);
-            sum2_wiq += Math.pow(w_iq, 2);
+        for (String q : docTerms.keySet()) {
+            idf = dictionary.get(q).getIdf();
+            tf = (double) docTerms.get(q).gettF();
+            max_tf = (double) documents.get(docId).getMax_tf();
+            upperSum += (tf/ max_tf) * idf;
         }
 
-        lowerSum = Math.sqrt(sum2_wij * sum2_wiq);
+        lowerSum = Math.sqrt(getDocWeight(docId) * query.size());
 
-        return upperSum / lowerSum;
+        return (upperSum / lowerSum);
     }
 
-    private double BM25(HashMap<String, TermData> intersectionSet, Document d) {
-        final double k1 = 0.75; final double b = 1.3; // bm25 constants
+    private double BM25(HashMap<String, TermData> intersectionSet,/* List<String> restTerms, */Document d) {
+        final double k1 = 1.3; final double b = 0.75; // bm25 constants
         double score = 0.0, tmp;
+
 
         for(Map.Entry<String, TermData> w : intersectionSet.entrySet()) {
             double idf = dictionary.get(w.getKey()).getIdf();
             tmp =  (k1+1) * w.getValue().gettF() * idf;
             tmp /= w.getValue().gettF() + k1 * ( (1 - b) + b * ( (double)d.getLength() / avgdl));
-            score += w.getValue().getImportant() ? (tmp*2) : tmp; // if it's an important term then it's weight will double
+            if (w.getValue().getImportant()) // if it's an important term then it's weight will double
+                tmp *= 2;
+            /*if (restTerms.contains(w.getKey()))
+                tmp*=0.3 ;*/
+            score += tmp;
         }
         return score;
     }
@@ -94,18 +99,44 @@ public class Ranker {
         Map.Entry<String, Double> curr;
         Map<Document, Double> sorted = new LinkedHashMap<>();
         for (int i=list.size()-1; i>0; i--) {
-                curr = list.remove(i);
+            curr = list.remove(i);
             sorted.put(documents.get(curr.getKey()), curr.getValue());
         }
         return sorted;
     }
-}
 
-/*list.sort(new Comparator<Map.Entry<String, Double>>() {
-    @Override
-    public int compare(Map.Entry<String, Double> o1, Map.Entry<String, Double> o2) {
-        if (o1.getValue() > o2.getValue()) return -1;
-        else if (o1.getValue().equals(o2.getValue())) return 0;
-        else return 1;
+    private double getDocWeight(String id) {
+        ArrayList<String> term_tf_arr = new ArrayList<>(150);
+        Document document = documents.get(id);
+        String currTerm;
+        int max_tf = document.getMax_tf(), tf;
+        double totalWeight = 0.0, idf=0.0, docWeight;
+
+        try {
+            BufferedReader br = new BufferedReader(new FileReader(docsTermTfPath + id + ".txt"));
+            String line;
+            while ((line = br.readLine()) != null) {
+                term_tf_arr.add(line);
+            }
+
+            for (String term_tf : term_tf_arr) {
+                currTerm = term_tf.substring(0, term_tf.lastIndexOf('_'));
+                tf = Integer.parseInt(term_tf.substring(term_tf.lastIndexOf('_')+1));
+                if (dictionary.containsKey(currTerm)) {
+                    idf = dictionary.get(currTerm).getIdf();
+                }
+                else if (dictionary.containsKey(currTerm.toUpperCase())) {
+                    idf = dictionary.get(currTerm.toUpperCase()).getIdf();
+                }
+                else if (dictionary.containsKey(currTerm.toLowerCase())) {
+                    idf = dictionary.get(currTerm.toLowerCase()).getIdf();
+                }
+                docWeight = ((double)tf / (double)max_tf) * idf;
+                totalWeight += Math.pow(docWeight, 2);
+            }
+        }
+        catch (IOException e) { e.printStackTrace(); }
+
+        return totalWeight;
     }
-});*/
+}

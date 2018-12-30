@@ -49,6 +49,9 @@ public class Indexer {
         numDocsCached++;
         numDocsIndexed++;
 
+        /*int idx = 0;
+        String[] term_tf_arr = new String[d_args.size()];*/
+
         // update documents set
         if (docsSet.containsKey(docId)) {
             CityDocument tmp = (CityDocument) docsSet.get(docId);
@@ -61,11 +64,13 @@ public class Indexer {
         // index each term in the document
         for (String t : terms)
         {
-            // update the document length
-            docsSet.get(docId).updateLength(d_args.get(t).gettF());
+            TermData currData = d_args.get(t);
 
-            if (d_args.get(t).gettF() > max_tf)
-                max_tf = d_args.get(t).gettF();
+            // update the document length
+            docsSet.get(docId).updateLength(currData.gettF());
+
+            if (currData.gettF() > max_tf)
+                max_tf = currData.gettF();
 
             // checks whether the term is already inside the dictionary, else add it
             DictionaryRecord tmp;
@@ -77,27 +82,27 @@ public class Indexer {
                     dictionary.put(t, new DictionaryRecord(dr));
                 }
                 tmp = dictionary.get(t);
-                tmp.updateTotalFreq(d_args.get(t).gettF());
+                tmp.updateTotalFreq(currData.gettF());
                 tmp.updateDF();
                 dictionary.replace(t, tmp);
             } else {
                 if (Character.isUpperCase(t.charAt(0))) {
-                    dictionary.put(t, new DictionaryRecord(t, d_args.get(t).gettF(), true));
+                    dictionary.put(t, new DictionaryRecord(t, currData.gettF(), true));
                     // adds the uppercase term to the listOfEntities
-                    int newTf = d_args.get(t).gettF();
-                    if(d_args.get(t).getImportant())
+                    int newTf = currData.gettF();
+                    if(currData.getImportant())
                         newTf+=10;
                     stringBuilderEntities.append(t+"_"+newTf + "@");
                 }
                 else
-                    dictionary.put(t, new DictionaryRecord(t, d_args.get(t).gettF(), false));
+                    dictionary.put(t, new DictionaryRecord(t, currData.gettF(), false));
             }
             // checks whether the term is already inside the posting list
             if (tmpPosting.containsKey(t))
-                tmpPosting.get(t).add(new PostingRecord(docId, d_args.get(t).gettF(), d_args.get(t).getPlaces()));
+                tmpPosting.get(t).add(new PostingRecord(docId, currData.gettF(), currData.getPlaces()));
             else {
                 tmpPosting.put(t, new LinkedList<>());
-                tmpPosting.get(t).add(new PostingRecord(docId, d_args.get(t).gettF(), d_args.get(t).getPlaces()));
+                tmpPosting.get(t).add(new PostingRecord(docId, currData.gettF(), currData.getPlaces()));
             }
         }
         // set the listOfEntities in this current document
@@ -105,6 +110,7 @@ public class Indexer {
             stringBuilderEntities.deleteCharAt(stringBuilderEntities.length() - 1);
             docsSet.get(docId).setEntities(stringBuilderEntities.toString());
         }
+
         docsSet.get(docId).setMax_tf(max_tf);
 
         if (numDocsCached == cachedDocsLimit)
@@ -547,8 +553,7 @@ public class Indexer {
     /**
      * write the document set to the disk. this is done for later use when retrieving docs
      */
-    public void writeDocumentsToDisk()
-    {
+    public void writeDocumentsToDisk() {
         try {
             File progData = new File(postingDir + "/ProgramData");
             if (!progData.exists()) progData.mkdirs();
@@ -560,6 +565,24 @@ public class Indexer {
             }
             bw.close();
         } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    private void writeDocumentTermTFToDisk(String docId, String[] arr) {
+        try {
+            File dir = new File(postingDir + "/ProgramData/Documents-Term-TF");
+            if (!dir.exists())
+                //noinspection ResultOfMethodCallIgnored
+                dir.mkdirs();
+            File file = new File(dir.getPath() + "/" + docId + ".txt");
+            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
+                    new FileOutputStream(file), StandardCharsets.UTF_8));
+            for (String str : arr) {
+                bw.write(str);
+                bw.newLine();
+            }
+            bw.close();
+
+        } catch (IOException e) {e.printStackTrace();}
     }
 
     /**

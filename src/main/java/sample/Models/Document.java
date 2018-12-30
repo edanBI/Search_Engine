@@ -9,10 +9,7 @@ import javafx.scene.control.Button;
 import javafx.scene.control.ListView;
 import javafx.stage.Stage;
 
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class Document {
     private String doc_id;
@@ -21,6 +18,7 @@ public class Document {
     private int length;
     private String entities;
     private Button entitiesButton;
+    public double weight;
 
     Document(String doc_id, int max_tf, int unique_words) {
         this.doc_id = doc_id;
