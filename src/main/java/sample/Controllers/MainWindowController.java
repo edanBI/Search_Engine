@@ -156,45 +156,60 @@ public class MainWindowController implements Initializable
         }
         Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...");
         alert.show();
-        startTime = System.currentTimeMillis();
-        readFile = new ReadFile(corpus_path);
-        Parser parser = new Parser(corpus_path+"/stop_words.txt", toStem);
-        File postingDir;
-        // create the directory
-        if (toStem) {
-            postings_path = lbl_posting_path + "/Posting With Stemmer";
-            postingDir = new File(postings_path);
-        }
-        else {
-            postings_path = lbl_posting_path + "/Posting Without Stemmer";
-            postingDir = new File(postings_path);
-        }
-        if (!postingDir.exists()) {
-            //noinspection ResultOfMethodCallIgnored
-            postingDir.mkdirs();
-        }
 
-        indexer = new Indexer(postings_path);
-        indexer.indexCities(readFile.getAllDocsCity());
-        HashMap<String,String> files;//will be fill by docid and text of the files
-        for (int i = 0 ; i<readFile.getListOfFilePath().size() ; i++){
-            files = readFile.read(readFile.getListOfFilePath().get(i));//filling the docs file by file
-            System.out.println(i);
-            for (String id:files.keySet()) {
-                indexer.processTerms(parser.Parsing(files.get(id)), id);
+        Task<Void> tGenerate = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                startTime = System.currentTimeMillis();
+                readFile = new ReadFile(corpus_path);
+                Parser parser = new Parser(corpus_path+"/stop_words.txt", toStem);
+                File postingDir;
+                // create the directory
+                if (toStem) {
+                    postings_path = lbl_posting_path + "/Posting With Stemmer";
+                    postingDir = new File(postings_path);
+                }
+                else {
+                    postings_path = lbl_posting_path + "/Posting Without Stemmer";
+                    postingDir = new File(postings_path);
+                }
+                if (!postingDir.exists()) {
+                    //noinspection ResultOfMethodCallIgnored
+                    postingDir.mkdirs();
+                }
+
+                indexer = new Indexer(postings_path);
+                indexer.indexCities(readFile.getAllDocsCity());
+                HashMap<String,String> files;//will be fill by docid and text of the files
+                for (int i = 0 ; i<readFile.getListOfFilePath().size() ; i++){
+                    files = readFile.read(readFile.getListOfFilePath().get(i));//filling the docs file by file
+                    System.out.println(i);
+                    for (String id:files.keySet()) {
+                        indexer.processTerms(parser.Parsing(files.get(id)), id);
+                    }
+                }
+                indexer.flushTmpPosting(); //clear all the remaining terms which haven't written to disk
+                indexer.mergeTmpPostingFiles(toStem); // build final posting files
+                indexer.writeDictionaryToDisk(toStem); // store all the dictionary in disk
+                indexer.writeDocumentsToDisk(); // store the documents in disk
+                readFile.writeCitiesToDisk(postings_path); // store the cities in disk
+                readFile.writeLanguagesToDisk(postings_path); // store the languages in disk
+                try { FileUtils.deleteDirectory(new File(postings_path+"/Temporary Postings")); } // delete all temporary files
+                catch (IOException e) { e.printStackTrace(); }
+                endTime = System.currentTimeMillis();
+
+                return null;
             }
-        }
-        indexer.flushTmpPosting(); //clear all the remaining terms which haven't written to disk
-        indexer.mergeTmpPostingFiles(toStem); // build final posting files
-        indexer.writeDictionaryToDisk(toStem); // store all the dictionary in disk
-        indexer.writeDocumentsToDisk(); // store the documents in disk
-        readFile.writeCitiesToDisk(postings_path); // store the cities in disk
-        readFile.writeLanguagesToDisk(postings_path); // store the languages in disk
-        try { FileUtils.deleteDirectory(new File(postings_path+"/Temporary Postings")); } // delete all temporary files
-        catch (IOException e) { e.printStackTrace(); }
-        endTime = System.currentTimeMillis();
-        alert.close();
-        displaySummary();
+        };
+
+        tGenerate.setOnSucceeded(event -> {
+            alert.close();
+            displaySummary();
+        });
+
+        Thread t = new Thread(tGenerate);
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -444,23 +459,37 @@ public class MainWindowController implements Initializable
         if (searcher == null) {
             try { ranker = new Ranker(loadedDictionary, restoreDocuments(), postings_path); }
             catch (IOException e) { e.printStackTrace(); }
-
-            File whichDictionary = new File(postings_path+"\\dictionary_stemmer.txt");
-            boolean stem = whichDictionary.exists();
-
-            if (resQueries_path == null || resQueries_path.length() == 0)
-                searcher = new Searcher(new Parser(corpus_path+"\\stop_words.txt", stem), loadedDictionary, ranker, postings_path, postings_path);
-            else
-                searcher = new Searcher(new Parser(corpus_path+"\\stop_words.txt", stem), loadedDictionary, ranker, postings_path, resQueries_path);
         }
+        File whichDictionary = new File(postings_path+"\\dictionary_stemmer.txt");
+        boolean stem = whichDictionary.exists();
+
+        if (resQueries_path == null || resQueries_path.length() == 0)
+            searcher = new Searcher(new Parser(corpus_path+"\\stop_words.txt", stem), loadedDictionary, ranker, postings_path, postings_path);
+        else
+            searcher = new Searcher(new Parser(corpus_path+"\\stop_words.txt", stem), loadedDictionary, ranker, postings_path, resQueries_path);
 
         ObservableList<Document> retrievedDocumentsList;
+
         if (txt_queryEntry.getText().length() > 0) {
             if (hs_citiesSelected==null) hs_citiesSelected=new HashSet<>();
             retrievedDocumentsList = FXCollections.observableArrayList(searcher.relevantDocsFromQuery(txt_queryEntry.getText(), hs_citiesSelected, toSemantic));
         } else {
-            searcher.relevantDocsFromQueryFile(queryFile, hs_citiesSelected, toSemantic);
-            new Alert(Alert.AlertType.INFORMATION, "IR  completed. Queries result stored in file!").showAndWait();
+            Task<Void> task = new Task<Void>() {
+                @Override
+                protected Void call() throws Exception {
+                    searcher.relevantDocsFromQueryFile(queryFile, hs_citiesSelected, toSemantic);
+                    return null;
+                }
+            };
+            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Searching...");
+            alert.show();
+            task.setOnSucceeded(event -> {
+                alert.close();
+                new Alert(Alert.AlertType.INFORMATION, "IR  completed. Queries result stored in file!").showAndWait();
+            });
+            Thread thread = new Thread(task);
+            thread.setDaemon(true);
+            thread.start();
             return;
         }
 
@@ -469,16 +498,9 @@ public class MainWindowController implements Initializable
         window.setTitle("Retrieved Documents");
         TableView<Document> tbl = new TableView<>();
         TableColumn<Document, String> col_ids = new TableColumn<>("Document ID");
-        //TableColumn col_entities = new TableColumn<>("Display Entities");
         tbl.getColumns().add(col_ids);
-        //noinspection unchecked
-        //tbl.getColumns().add(col_entities);
 
         col_ids.setCellValueFactory(data -> data.getValue().getPropertyDoc_id());
-        //col_entities.setCellValueFactory(new PropertyValueFactory<Document, String>("entities"));
-        /*col_entities.setCellValueFactory(
-                new PropertyValueFactory<Document, String>("entitiesButton")
-        );*/
 
         tbl.setItems(retrievedDocumentsList);
         addButtonToTable(tbl);
@@ -490,47 +512,46 @@ public class MainWindowController implements Initializable
     }
 
     private void addButtonToTable(TableView<Document> table ) {
-        TableColumn<Document, Void> colBtn = new TableColumn("Entites");
+        @SuppressWarnings("unchecked") TableColumn<Document, Void> colBtn = new TableColumn("Entities");
 
         Callback<TableColumn<Document, Void>, TableCell<Document, Void>> cellFactory = new Callback<TableColumn<Document, Void>, TableCell<Document, Void>>() {
             @Override
             public TableCell<Document, Void> call(final TableColumn<Document, Void> param) {
-                final TableCell<Document, Void> cell = new TableCell<Document, Void>() {
+                @SuppressWarnings("UnnecessaryLocalVariable") final TableCell<Document, Void> cell = new TableCell<Document, Void>() {
 
                     private final Button btn = new Button("Show Entities");
-
                     {
                         btn.setOnAction((ActionEvent event) -> {
                             Document doc = getTableView().getItems().get(getIndex());
                             List<String> entities = strongestEntities(doc.getEntities(),loadedDictionary);
                             Stage window = new Stage();
                             window.setTitle("The Entities of " + doc.getDoc_id());
-                            Label entit = new Label();
+                            Label entity = new Label();
 
                             if (entities.isEmpty()){
-                                entit.setText("There is no entitis in this Document");
+                                entity.setText("There are no entities in this Document");
                             }else {
                                 if(entities.size()<2){
-                                    entit.setText(entities.get(0));
+                                    entity.setText(entities.get(0));
                                 }
                                 else if(entities.size()<3){
-                                    entit.setText(entities.get(0) + "\n" + entities.get(1));
+                                    entity.setText(entities.get(0) + "\n" + entities.get(1));
                                 }
                                 else if(entities.size()<4){
-                                    entit.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
+                                    entity.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
                                             entities.get(2));
                                 }
                                 else if(entities.size()<5){
-                                    entit.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
+                                    entity.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
                                             entities.get(2) + "\n" + entities.get(3));
                                 }
                                 else if(entities.size()<6){
-                                    entit.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
+                                    entity.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
                                             entities.get(2) + "\n" + entities.get(3) + "\n" +
                                             entities.get(4));
                                 }
                             }
-                            window.setScene(new Scene(entit, 250, 100));
+                            window.setScene(new Scene(entity, 250, 100));
                             window.show();
                         });
                     }
@@ -554,7 +575,6 @@ public class MainWindowController implements Initializable
         table.getColumns().add(colBtn);
 
     }
-
 
     private List<String> strongestEntities(String entities, TreeMap<String,DictionaryRecord> dictionary) {
         List<String> list = new ArrayList<>();
@@ -585,7 +605,7 @@ public class MainWindowController implements Initializable
         return list;
     }
 
-    private double round(double value, int places) {
+    private double round(double value, @SuppressWarnings("SameParameterValue") int places) {
         if (places < 0) throw new IllegalArgumentException();
 
         long factor = (long) Math.pow(10, places);

@@ -37,10 +37,10 @@ public class Ranker {
                 hash_scores.put(d.getKey(), 0.0); // because Count(w,d)==0
             }
             else {
-                bm25 = BM25(docsAndTerms.get(d.getKey()), d.getValue()/*,restTerms*/);
-                tf_idf_cosine = TF_IDF_Cosine(docsAndTerms.get(d.getKey()), d.getKey(), queryTerms);
+                score = BM25(docsAndTerms.get(d.getKey()), d.getValue()/*,restTerms*/);
+                /*tf_idf_cosine = TF_IDF_Cosine(docsAndTerms.get(d.getKey()), d.getKey(), queryTerms);*/
 
-                score = 0.6*(bm25) + 0.4*(tf_idf_cosine);
+                //score = 0.6*(bm25) + 0.4*(tf_idf_cosine);
                 //score = bm25;
                 //score = tf_idf_cosine;
                 hash_scores.put(d.getKey(), score);
@@ -58,7 +58,7 @@ public class Ranker {
         return ranked_arr;
     }
 
-    private double TF_IDF_Cosine(HashMap<String, TermData> docTerms, String docId, List<String> query) {
+    /*private double TF_IDF_Cosine(HashMap<String, TermData> docTerms, String docId, List<String> query) {
         double lowerSum, upperSum = 0.0, idf, tf, max_tf;
 
         for (String q : docTerms.keySet()) {
@@ -71,10 +71,10 @@ public class Ranker {
         lowerSum = Math.sqrt(getDocWeight(docId) * query.size());
 
         return (upperSum / lowerSum);
-    }
+    }*/
 
     private double BM25(HashMap<String, TermData> intersectionSet,/* List<String> restTerms, */Document d) {
-        final double k1 = 1.3; final double b = 0.75; // bm25 constants
+        final double k1 = 1.2; final double b = 0.75; // bm25 constants
         double score = 0.0, tmp;
 
 
@@ -82,8 +82,8 @@ public class Ranker {
             double idf = dictionary.get(w.getKey()).getIdf();
             tmp =  (k1+1) * w.getValue().gettF() * idf;
             tmp /= w.getValue().gettF() + k1 * ( (1 - b) + b * ( (double)d.getLength() / avgdl));
-            if (w.getValue().getImportant()) // if it's an important term then it's weight will double
-                tmp *= 2;
+            /*if (w.getValue().getImportant()) // if it's an important term then it's weight will double
+                tmp *= 2;*/
             /*if (restTerms.contains(w.getKey()))
                 tmp*=0.3 ;*/
             score += tmp;
@@ -105,7 +105,7 @@ public class Ranker {
         return sorted;
     }
 
-    private double getDocWeight(String id) {
+    /*private double getDocWeight(String id) {
         ArrayList<String> term_tf_arr = new ArrayList<>(150);
         Document document = documents.get(id);
         String currTerm;
@@ -138,5 +138,5 @@ public class Ranker {
         catch (IOException e) { e.printStackTrace(); }
 
         return totalWeight;
-    }
+    }*/
 }
