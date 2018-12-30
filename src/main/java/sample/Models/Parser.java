@@ -51,7 +51,7 @@ public class Parser {
             int index = -1;
             boolean toStem = false;
 
-            if (stopWords.contains(current.trim().toLowerCase()) && !current.trim().equals("between")) {
+            if (stopWords.contains(current.toLowerCase()) && !current.trim().equals("between")) {
                 i++;
                 continue;
             }

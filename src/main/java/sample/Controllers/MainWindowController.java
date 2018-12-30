@@ -17,6 +17,7 @@ import javafx.scene.layout.VBox;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
+import javafx.util.Callback;
 import org.apache.commons.io.FileUtils;
 import org.controlsfx.control.CheckListView;
 import sample.Models.*;
@@ -144,7 +145,6 @@ public class MainWindowController implements Initializable
     public ImageView imageView_logo;
     public MenuButton m_languages;
     public Label lbl_resPath;
-    public Label lbl_status;
 
     /**
      * this method generates the dictionary and posting files.
@@ -154,34 +154,8 @@ public class MainWindowController implements Initializable
             showAlert();
             return;
         }
-        /*Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...");
-        alert.show();*/
-
-        /*lbl_status.setText("Parsing and Indexing");
-        Task<Void> task = new Task<Void>() {
-            @Override
-            protected Void call() throws Exception {
-                updateMessage(".");
-                Thread.sleep(1000);
-                updateMessage("..");
-                Thread.sleep(1000);
-                updateMessage("....");
-                Thread.sleep(1000);
-                return null;
-            }
-        };
-        lbl_status.textProperty().bind(task.messageProperty());
-
-        task.setOnSucceeded(e -> {
-            lbl_status.textProperty().unbind();
-            // this message will be seen.
-            lbl_status.setText("operation completed successfully");
-        });
-
-        Thread t = new Thread(task);
-        t.setDaemon(true);
-        t.start();*/
-
+        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...");
+        alert.show();
         startTime = System.currentTimeMillis();
         readFile = new ReadFile(corpus_path);
         Parser parser = new Parser(corpus_path+"/stop_words.txt", toStem);
@@ -219,8 +193,7 @@ public class MainWindowController implements Initializable
         try { FileUtils.deleteDirectory(new File(postings_path+"/Temporary Postings")); } // delete all temporary files
         catch (IOException e) { e.printStackTrace(); }
         endTime = System.currentTimeMillis();
-
-        //alert.close();
+        alert.close();
         displaySummary();
     }
 
@@ -496,25 +469,131 @@ public class MainWindowController implements Initializable
         window.setTitle("Retrieved Documents");
         TableView<Document> tbl = new TableView<>();
         TableColumn<Document, String> col_ids = new TableColumn<>("Document ID");
-        TableColumn col_entities = new TableColumn<>("Display Entities");
+        //TableColumn col_entities = new TableColumn<>("Display Entities");
         tbl.getColumns().add(col_ids);
         //noinspection unchecked
-        tbl.getColumns().add(col_entities);
+        //tbl.getColumns().add(col_entities);
 
         col_ids.setCellValueFactory(data -> data.getValue().getPropertyDoc_id());
-        col_entities.setCellValueFactory(new PropertyValueFactory<Document, String>("entities"));
+        //col_entities.setCellValueFactory(new PropertyValueFactory<Document, String>("entities"));
         /*col_entities.setCellValueFactory(
                 new PropertyValueFactory<Document, String>("entitiesButton")
         );*/
 
         tbl.setItems(retrievedDocumentsList);
-
+        addButtonToTable(tbl);
         ScrollPane scrollPane = new ScrollPane(tbl);
         scrollPane.setFitToWidth(true);
         Scene scene = new Scene(scrollPane, 515, 705);
         window.setScene(scene);
         window.show();
     }
+
+    private void addButtonToTable(TableView<Document> table ) {
+        TableColumn<Document, Void> colBtn = new TableColumn("Entites");
+
+        Callback<TableColumn<Document, Void>, TableCell<Document, Void>> cellFactory = new Callback<TableColumn<Document, Void>, TableCell<Document, Void>>() {
+            @Override
+            public TableCell<Document, Void> call(final TableColumn<Document, Void> param) {
+                final TableCell<Document, Void> cell = new TableCell<Document, Void>() {
+
+                    private final Button btn = new Button("Show Entities");
+
+                    {
+                        btn.setOnAction((ActionEvent event) -> {
+                            Document doc = getTableView().getItems().get(getIndex());
+                            List<String> entities = strongestEntities(doc.getEntities(),loadedDictionary);
+                            Stage window = new Stage();
+                            window.setTitle("The Entities of " + doc.getDoc_id());
+                            Label entit = new Label();
+
+                            if (entities.isEmpty()){
+                                entit.setText("There is no entitis in this Document");
+                            }else {
+                                if(entities.size()<2){
+                                    entit.setText(entities.get(0));
+                                }
+                                else if(entities.size()<3){
+                                    entit.setText(entities.get(0) + "\n" + entities.get(1));
+                                }
+                                else if(entities.size()<4){
+                                    entit.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
+                                            entities.get(2));
+                                }
+                                else if(entities.size()<5){
+                                    entit.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
+                                            entities.get(2) + "\n" + entities.get(3));
+                                }
+                                else if(entities.size()<6){
+                                    entit.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
+                                            entities.get(2) + "\n" + entities.get(3) + "\n" +
+                                            entities.get(4));
+                                }
+                            }
+                            window.setScene(new Scene(entit, 250, 100));
+                            window.show();
+                        });
+                    }
+
+                    @Override
+                    public void updateItem(Void item, boolean empty) {
+                        super.updateItem(item, empty);
+                        if (empty) {
+                            setGraphic(null);
+                        } else {
+                            setGraphic(btn);
+                        }
+                    }
+                };
+                return cell;
+            }
+        };
+
+        colBtn.setCellFactory(cellFactory);
+
+        table.getColumns().add(colBtn);
+
+    }
+
+
+    private List<String> strongestEntities(String entities, TreeMap<String,DictionaryRecord> dictionary) {
+        List<String> list = new ArrayList<>();
+        if (entities.isEmpty())
+            return list;
+        String[] entitiesArr = entities.split("@");
+        for (String s : entitiesArr) {
+            if (dictionary.containsKey(s.substring(0, s.indexOf("_")))) {
+                int df = dictionary.get(s.substring(0, s.indexOf("_"))).getDF();
+                int newTf = Integer.parseInt(s.substring(s.indexOf("_") + 1));
+                double rank = (double) (newTf) / (double) (df);
+                rank = round(rank, 3);
+                list.add("Entity: " + s.substring(0, s.indexOf("_")) + " ,Score: " + rank);
+            }
+        }
+
+        list.sort(new Comparator<String>() {
+            @Override
+            public int compare(String o1, String o2) {
+                double oo1 = Double.parseDouble(o1.substring(o1.indexOf("Score:") + 7));
+                double oo2 = Double.parseDouble(o2.substring(o2.indexOf("Score:") + 7));
+                if (oo1 < oo2) return 1;
+                else if (oo1 > oo2) return -1;
+                else
+                    return o1.substring(o1.indexOf("Entity: ") + 8, o1.indexOf(" ,Score:")).compareTo(o2.substring(o2.indexOf("Entity: ") + 8, o2.indexOf(" ,Score:")));
+            }
+        });
+        return list;
+    }
+
+    private double round(double value, int places) {
+        if (places < 0) throw new IllegalArgumentException();
+
+        long factor = (long) Math.pow(10, places);
+        value = value * factor;
+        long tmp = Math.round(value);
+        return (double) tmp / factor;
+    }
+
 
     /**
      * run the query from the file in the path the user had entered.

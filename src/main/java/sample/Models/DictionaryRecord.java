@@ -62,7 +62,7 @@ public class DictionaryRecord {
         df++;
     }
 
-    int getDF()
+    public int getDF()
     {
         return df;
     }

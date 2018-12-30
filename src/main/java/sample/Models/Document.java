@@ -40,7 +40,7 @@ public class Document {
         this.entities = "";
     }
 
-    String getDoc_id() {
+    public String getDoc_id() {
         return doc_id;
     }
 
@@ -72,8 +72,8 @@ public class Document {
         this.unique_words = unique_words;
     }
 
-    public String[] getEntities() {
-        return this.entities.split("@");
+    public String getEntities() {
+        return this.entities;
     }
 
     void setEntities(List<String> list) {
