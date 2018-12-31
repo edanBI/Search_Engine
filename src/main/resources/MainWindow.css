@@ -24,7 +24,7 @@
     -fx-color: white;
 }
 
-.text-field:disabled {
+.text-field {
     -fx-border-color: black;
     -fx-text-inner-color: crimson;
     -fx-opacity: 1.0;
