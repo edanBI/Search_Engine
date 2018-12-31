@@ -234,7 +234,7 @@ public class Indexer {
      * @param file2 - right file
      * @throws IOException in the event of an IOException
      */
-    private void mergeSort(String file1, String file2) throws IOException, StringIndexOutOfBoundsException
+    private void mergeSort(String file1, String file2) throws IOException, StringIndexOutOfBoundsException //
     {
         File f1 = new File(tmpPostPath + "/" + file1);
         File f2 = new File(tmpPostPath + "/" + file2);
@@ -327,7 +327,7 @@ public class Indexer {
      * @param stem is true if stemmer check box is selected.
      * @throws IOException in the event of an IO exception thrown, if unable to read or write.
      */
-    private void createPostings(String left, String right, boolean stem) throws IOException, NullPointerException
+    private void createPostings(String left, String right, boolean stem) throws IOException, NullPointerException //
     {
         String postingDir_path;
         File postingDir;
@@ -542,9 +542,9 @@ public class Indexer {
                 .put(docid, new CityDocument(docid, -1, -1, city))));
     }
 
-    public TreeMap<String, City> getIdxCities() {
+    /*public TreeMap<String, City> getIdxCities() {
         return idxCities;
-    }
+    }*/
 
     public TreeMap<String, DictionaryRecord> getDictionary() {
         return dictionary;
@@ -556,7 +556,9 @@ public class Indexer {
     public void writeDocumentsToDisk() {
         try {
             File progData = new File(postingDir + "/ProgramData");
-            if (!progData.exists()) progData.mkdirs();
+            if (!progData.exists())
+                //noinspection ResultOfMethodCallIgnored
+                progData.mkdirs();
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(progData + "/Documents.txt"), StandardCharsets.UTF_8));
             for (Document doc : docsSet.values()) {
@@ -567,7 +569,7 @@ public class Indexer {
         } catch (IOException e) { e.printStackTrace(); }
     }
 
-    private void writeDocumentTermTFToDisk(String docId, String[] arr) {
+    /*private void writeDocumentTermTFToDisk(String docId, String[] arr) {
         try {
             File dir = new File(postingDir + "/ProgramData/Documents-Term-TF");
             if (!dir.exists())
@@ -583,7 +585,7 @@ public class Indexer {
             bw.close();
 
         } catch (IOException e) {e.printStackTrace();}
-    }
+    }*/
 
     /**
      * @param path to the postings directory

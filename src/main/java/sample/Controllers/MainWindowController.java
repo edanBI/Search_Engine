@@ -1,6 +1,5 @@
 package sample.Controllers;
 
-import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ListChangeListener;
 import javafx.collections.ObservableList;
@@ -10,7 +9,6 @@ import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
@@ -154,8 +152,12 @@ public class MainWindowController implements Initializable
             showAlert();
             return;
         }
-        Alert alert = new Alert(Alert.AlertType.INFORMATION, "Parsing and Indexing...");
-        alert.show();
+
+        DialogPane dialogPane = new DialogPane();
+        dialogPane.setContentText("Parsing and Indexing...");
+        Stage sAlert = new Stage();
+        sAlert.setScene(new Scene(dialogPane));
+        sAlert.show();
 
         Task<Void> tGenerate = new Task<Void>() {
             @Override
@@ -203,7 +205,8 @@ public class MainWindowController implements Initializable
         };
 
         tGenerate.setOnSucceeded(event -> {
-            alert.close();
+            //alert.close();
+            sAlert.close();
             displaySummary();
         });
 
@@ -263,11 +266,11 @@ public class MainWindowController implements Initializable
     */
     public void reset() {
         try {
-            File Posting_dir = new File(postings_path);
+            File Posting_dir = new File(txt_postings_path.getText());
             if (Posting_dir.exists())
-                FileUtils.deleteDirectory(Posting_dir);
+                FileUtils.cleanDirectory(Posting_dir);
         }
-        catch (IOException e) { e.printStackTrace(); }
+        catch (Exception e) { /* there are no files to delete --> do nothing*/ }
         txt_corpus_path.clear();
         txt_postings_path.clear();
         corpus_path = null;
@@ -463,10 +466,12 @@ public class MainWindowController implements Initializable
         File whichDictionary = new File(postings_path+"\\dictionary_stemmer.txt");
         boolean stem = whichDictionary.exists();
 
-        if (resQueries_path == null || resQueries_path.length() == 0)
-            searcher = new Searcher(new Parser(corpus_path+"\\stop_words.txt", stem), loadedDictionary, ranker, postings_path, postings_path);
+        if (resQueries_path == null || resQueries_path.length() == 0) {
+            lbl_resPath.setText(postings_path + "\\results.txt");
+            searcher = new Searcher(new Parser(corpus_path + "\\stop_words.txt", stem), loadedDictionary, ranker, postings_path, postings_path);
+        }
         else
-            searcher = new Searcher(new Parser(corpus_path+"\\stop_words.txt", stem), loadedDictionary, ranker, postings_path, resQueries_path);
+            searcher = new Searcher(new Parser(corpus_path + "\\stop_words.txt", stem), loadedDictionary, ranker, postings_path, resQueries_path);
 
         ObservableList<Document> retrievedDocumentsList;
 

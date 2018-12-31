@@ -18,15 +18,13 @@ public class Document {
     private int length;
     private String entities;
     private Button entitiesButton;
-    public double weight;
+//    public double weight;
 
     Document(String doc_id, int max_tf, int unique_words) {
         this.doc_id = doc_id;
         this.max_tf = max_tf;
         this.unique_words = unique_words;
         this.length = 0;
-//        entitiesButton = new Button("Display Entities");
-//        entitiesButton.setOnAction(this::displayEntities);
         this.entities = "";
     }
 
@@ -35,8 +33,6 @@ public class Document {
         this.max_tf = max_tf;
         this.unique_words = unique_words;
         this.length = length;
-//        entitiesButton = new Button("Display Entities");
-//        entitiesButton.setOnAction(this::displayEntities);
         this.entities = "";
     }
 
@@ -76,7 +72,7 @@ public class Document {
         return this.entities;
     }
 
-    void setEntities(List<String> list) {
+    /*void setEntities(List<String> list) {
         StringBuilder stringBuilder = new StringBuilder();
         list.sort(new Comparator<String>() {
             @Override
@@ -96,7 +92,7 @@ public class Document {
         if (stringBuilder != null && !stringBuilder.toString().isEmpty())
             stringBuilder.deleteCharAt(stringBuilder.length() - 1);
         this.entities = stringBuilder.toString();
-    }
+    }*/
 
     public void setEntities(String arg) {
         entities = arg;
