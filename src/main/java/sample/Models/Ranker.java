@@ -1,20 +1,14 @@
 package sample.Models;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.*;
 
 public class Ranker {
     private TreeMap<String, DictionaryRecord> dictionary;
     private HashMap<String, Document> documents;
-    private String docsTermTfPath;
     private double avgdl;
 
-    public Ranker(TreeMap<String, DictionaryRecord> dictionary, HashMap<String, Document> documents, String postingPath) {
+    public Ranker(TreeMap<String, DictionaryRecord> dictionary, HashMap<String, Document> documents) {
         this.dictionary = dictionary;
         this.documents = documents;
-        this.docsTermTfPath = postingPath + "/ProgramData/Documents-Term-TF/";
 
         // calc the average document length
         this.documents.forEach((id, doc) -> avgdl += doc.getLength());
@@ -39,20 +33,21 @@ public class Ranker {
 
                 // BM25 calculationx
                 final double k1 = 1.2; final double b = 0.75; // bm25 constants
-                double score, bm25=0.0, important=0.0, notImportant=0.0, sumImportant, idf, tmp;
+                double score, bm25=0.0, important=0.0, notImportant=0.0, sumImportant, tmp;
                 for(Map.Entry<String, TermData> w : docsAndTerms.get(d.getKey()).entrySet()) {
-                    idf = dictionary.get(w.getKey()).getIdf();
-                    tmp =  (k1+1) * w.getValue().gettF() * idf;
-                    tmp /= w.getValue().gettF() + k1 * ( (1 - b) + b * ( (double)d.getValue().getLength() / avgdl));
+                    double wTf = w.getValue().gettF();
+                    double idf = dictionary.get(w.getKey()).getIdf();
+                    tmp =  (k1+1) * wTf * idf;
+                    tmp /= wTf + k1 * ( (1 - b) + b * ( (double)d.getValue().getLength() / avgdl));
                     bm25 += tmp;
-
-                    if (w.getValue().getImportant()) important++;
-                    else notImportant++;
+                    important++;
+/*                    if (w.getValue().getImportant()) important++;
+                    else notImportant++;*/
                 }
 
-                sumImportant = 0.7*important + 0.3*notImportant;
+                sumImportant = important /*+ notImportant*/;
 
-                score = 0.8*bm25 + 0.2*sumImportant;
+                score = 0.7*bm25 + 0.3*sumImportant;
                 hash_scores.put(d.getKey(), score);
             }
         }

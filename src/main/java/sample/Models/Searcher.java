@@ -8,6 +8,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
+import java.util.List;
 
 public class Searcher {
     private static int queryID = 0;
@@ -188,9 +189,9 @@ public class Searcher {
         try {
             Document document = Jsoup.parse(file, "UTF-8");
             Elements docs = document.getElementsByTag("top");
-            Iterator<Element> iterator = docs.iterator();
-            while (iterator.hasNext()) {
-                Element element = iterator.next();
+            Iterator<Element> yotam = docs.iterator();
+            while (yotam.hasNext()) {
+                Element element = yotam.next();
 
                 //Query ID by <num> tag
                 String qId = element.getElementsByTag("num").toString();
@@ -202,17 +203,26 @@ public class Searcher {
                 queryText = queryText.substring(7, queryText.indexOf("</title>"));
                 queryText = queryText.trim();
 
-                //Query description by <desc> tag
-                String e="";
-                if (!element.getElementsByTag("desc").toString().isEmpty()){
+                /*//Query description by <desc> tag
+                String e = "";
+                if (!element.getElementsByTag("desc").toString().isEmpty()) {
                     e = element.getElementsByTag("desc").toString();
                     if (e.contains("<narr>")) {
                         e = e.substring(e.indexOf("Description:") + 12, e.indexOf("<narr>"));
-                    }else
+                    } else
                         e = e.substring(e.indexOf("Description:") + 12, e.indexOf("</desc>"));
                     e = e.trim();
-                }
-                QueryById.put(qId, queryText+" "+e);
+                }/*
+                //Query Narrative by <narr> tag
+                String narr = "";
+                if (!element.getElementsByTag("narr").toString().isEmpty()) {
+                    narr = element.getElementsByTag("narr").toString();
+                    if (narr.contains("<narr>")) {
+                        narr = narr.substring(e.indexOf("Narrative:") + 10, narr.indexOf("</narr>"));
+                        narr = narr.trim();
+                    }
+                }*/
+                QueryById.put(qId, queryText);
             }
         } catch (IOException e) {
             e.getStackTrace();
