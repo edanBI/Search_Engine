@@ -76,8 +76,8 @@ public class MainWindowController implements Initializable
         }
     }
 
-    private HashSet<String> restoreLanguages() throws IOException {
-        HashSet<String> language = new HashSet<>();
+    private ArrayList<String> restoreLanguages() throws IOException {
+        ArrayList<String> language = new ArrayList<>();
         BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Languages.txt"));
         String line;
         while ((line = br.readLine()) != null) {
@@ -85,6 +85,7 @@ public class MainWindowController implements Initializable
                 language.add(line);
         }
         br.close();
+        language.sort(String::compareTo);
         return language;
     }
 
@@ -361,7 +362,7 @@ public class MainWindowController implements Initializable
             return;
         m_languages.maxHeight(100.0);
         m_languages.getItems().clear();
-        HashSet<String> languages = new HashSet<>();
+        ArrayList<String> languages = new ArrayList<>();
         if (language.exists()){
             try {
                 languages = restoreLanguages();
@@ -504,14 +505,15 @@ public class MainWindowController implements Initializable
         TableView<Document> tbl = new TableView<>();
         TableColumn<Document, String> col_ids = new TableColumn<>("Document ID");
         tbl.getColumns().add(col_ids);
-
         col_ids.setCellValueFactory(data -> data.getValue().getPropertyDoc_id());
 
         tbl.setItems(retrievedDocumentsList);
+        tbl.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
         addButtonToTable(tbl);
         ScrollPane scrollPane = new ScrollPane(tbl);
+        scrollPane.setFitToHeight(true);
         scrollPane.setFitToWidth(true);
-        Scene scene = new Scene(scrollPane, 515, 705);
+        Scene scene = new Scene(scrollPane, 400, 500);
         window.setScene(scene);
         window.show();
     }
@@ -536,27 +538,16 @@ public class MainWindowController implements Initializable
                             if (entities.isEmpty()){
                                 entity.setText("There are no entities in this Document");
                             }else {
-                                if(entities.size()<2){
-                                    entity.setText(entities.get(0));
+                                StringBuilder show = new StringBuilder();
+                                for (int i = 0; i <entities.size() && i <5 ; i++){
+                                    show.append(entities.get(i)+"\n");
                                 }
-                                else if(entities.size()<3){
-                                    entity.setText(entities.get(0) + "\n" + entities.get(1));
+                                if (show.toString().isEmpty()){
+                                    show.append("There are no entities in this Document");
                                 }
-                                else if(entities.size()<4){
-                                    entity.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
-                                            entities.get(2));
-                                }
-                                else if(entities.size()<5){
-                                    entity.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
-                                            entities.get(2) + "\n" + entities.get(3));
-                                }
-                                else if(entities.size()<6){
-                                    entity.setText(entities.get(0) + "\n" + entities.get(1) + "\n" +
-                                            entities.get(2) + "\n" + entities.get(3) + "\n" +
-                                            entities.get(4));
-                                }
+                                entity.setText(show.toString());
                             }
-                            window.setScene(new Scene(entity, 250, 100));
+                            window.setScene(new Scene(entity, 300, 100));
                             window.show();
                         });
                     }
