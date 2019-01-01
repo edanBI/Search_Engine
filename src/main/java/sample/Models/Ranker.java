@@ -20,7 +20,7 @@ public class Ranker {
      * @param queryTerms is the query
      * @return 50 documents with the highest score
      */
-    ArrayList<Document> rank(/*List<String> restTerms, */List<String> queryTerms, HashMap<String, HashMap<String, TermData>> docsAndTerms) {
+    ArrayList<Document> rank(HashSet<String> queryTerms, HashSet<String> restTerms, HashMap<String, HashMap<String, TermData>> docsAndTerms) {
         HashMap<String, Double> hash_scores = new HashMap<>();
 
         // calculate each document score
@@ -38,10 +38,13 @@ public class Ranker {
                     tmp =  (k1+1) * wTf * idf;
                     tmp /= wTf + k1 * ( (1 - b) + b * ( (double)d.getValue().getLength() / avgdl));
                     bm25 += tmp;
-                    numOfWords++;
+                    if (restTerms != null && !restTerms.isEmpty() && restTerms.contains(w) && !queryTerms.contains(w))
+                        numOfWords+=0.3;
+                    else
+                        numOfWords++;
                 }
 
-                score = 0.3*bm25 + 0.7*numOfWords;
+                score = 0.8*bm25 + 0.2*numOfWords;
                 hash_scores.put(d.getKey(), score);
             }
         }

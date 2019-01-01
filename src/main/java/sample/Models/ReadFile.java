@@ -14,7 +14,7 @@ public class ReadFile {
     //list of all the file path in the corpus
     private ArrayList<String> listOfFilePath;
     //list of all languages of documents in the corpus
-    private ArrayList<String> allDocsLanguage;
+    private HashSet<String> allDocsLanguage;
     //list of all cities of documents in the corpus
     private HashMap<String, City> allDocsCity;
 
@@ -25,14 +25,15 @@ public class ReadFile {
     public ReadFile(String path) {
         this.path = path;
         this.listOfFilePath = new ArrayList<>();
-        this.allDocsLanguage = new ArrayList<>();
+        this.allDocsLanguage = new HashSet<>();
         this.allDocsCity = new HashMap<>();
         filesForFolder(path);
     }
 
     public ArrayList<String> getAllDocsLanguage() {
-        allDocsLanguage.sort(String::compareTo);
-        return allDocsLanguage;
+        ArrayList<String> language = new ArrayList<>(allDocsLanguage);
+        language.sort(String::compareTo);
+        return language;
     }
 
     public HashMap<String, City> getAllDocsCity() {

@@ -8,7 +8,6 @@ import java.io.*;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
-import java.util.List;
 
 public class Searcher {
     private static int queryID = 0;
@@ -79,15 +78,28 @@ public class Searcher {
         HashSet<String> docsByCities = docsByCities(cities);
         // HashMap for all the terms by docs (K- docId, V- term name ,TermData)
         HashMap<String, HashMap<String, TermData>> docsAndTerms = new HashMap<>();
+        String desc = query.substring(query.indexOf("@")+1).toLowerCase();
+        String querynew = query.substring(0,query.indexOf("@")).toLowerCase();
+
         // return all the Terms of the query, after parse
-        List<String> queryTerms = new ArrayList<>(parser.Parsing(query).keySet());
-        List<String> semanticList = toSemanticTreatment ? semanticTreatment(queryTerms) : null;
+        HashSet<String> queryTerms = new HashSet<>(parser.Parsing(querynew).keySet());
+
+        String semanticList;
+        if (toSemanticTreatment)
+            semanticList = semanticTreatment(queryTerms);
+        else
+            semanticList = "";
+
+        // return all the rest Terms of the query (from the description and semntic treatment), after parse
+        HashSet<String> restTerms = new HashSet<>(parser.Parsing(desc + " " + semanticList).keySet());
 
         // add words with a similar meaning to the terms in the given query
-        if (toSemanticTreatment && semanticList != null)
-            queryTerms.addAll(semanticList);
+        HashSet<String> allTerms = new HashSet<>(queryTerms);
+        if (!restTerms.isEmpty()){
+            allTerms.addAll(restTerms);
+        }
 
-        for (String term : queryTerms) {
+        for (String term : allTerms) {
             //check if the term is in the dictionary
             if (dictionary.containsKey(term) || dictionary.containsKey(term.toUpperCase()) ||
                     dictionary.containsKey(term.toLowerCase())) {
@@ -127,7 +139,7 @@ public class Searcher {
             }
         }
         // return an arraylist containing the ranked documents by descending order of relevancy
-        return ranker.rank(queryTerms, docsAndTerms);
+        return ranker.rank(queryTerms, restTerms, docsAndTerms);
     }
 
     /**
@@ -203,14 +215,19 @@ public class Searcher {
                 queryText = queryText.substring(7, queryText.indexOf("</title>"));
                 queryText = queryText.trim();
 
-                /*//Query description by <desc> tag
+                //Query description by <desc> tag
                 String e = "";
                 if (!element.getElementsByTag("desc").toString().isEmpty()) {
-                    e = element.getElementsByTag("desc").toString();
+                    e = element.getElementsByTag("desc").toString().toLowerCase();
                     if (e.contains("<narr>")) {
-                        e = e.substring(e.indexOf("Description:") + 12, e.indexOf("<narr>"));
+                        e = e.substring(e.indexOf("description:") + 12, e.indexOf("<narr>"));
                     } else
-                        e = e.substring(e.indexOf("Description:") + 12, e.indexOf("</desc>"));
+                        e = e.substring(e.indexOf("description:") + 12, e.indexOf("</desc>"));
+
+                    if (e.contains("discuss")){
+                        e = e.substring(e.indexOf("discuss")+7,e.indexOf("."));
+                    }else
+                        e = "";
                     e = e.trim();
                 }/*
                 //Query Narrative by <narr> tag
@@ -218,11 +235,27 @@ public class Searcher {
                 if (!element.getElementsByTag("narr").toString().isEmpty()) {
                     narr = element.getElementsByTag("narr").toString();
                     if (narr.contains("<narr>")) {
-                        narr = narr.substring(e.indexOf("Narrative:") + 10, narr.indexOf("</narr>"));
-                        narr = narr.trim();
+                        narr = narr.substring(e.indexOf("Narrative:") + 10, narr.indexOf("</narr>")).toLowerCase();
                     }
+                    if(narr.contains("relevant document")){
+                        narr = narr.substring(narr.indexOf("relevant document")+ 17);
+                    }else if (narr.contains("discussing")){
+                        String[] narrArr = narr.split("discussing");
+                        StringBuilder newNarr = new StringBuilder();
+                        for (int i = 1 ; i<narrArr.length; i++){
+                            if (narrArr[i].contains("not relevant") || narrArr[i].contains("non-relevant") || narrArr[i].contains("not relevant:"))
+                                continue;
+                            else if (narrArr[i].contains("relevant.")){
+                                newNarr.append(narrArr[i].substring(0,narrArr[i].indexOf("relevant.")) + " ");
+                            }else if (narrArr[i].contains("relevant:")){
+                                newNarr.append(narrArr[i].substring(narrArr[i].indexOf("relevant:")+9) + " ");
+                            }
+                        }
+                        narr = newNarr.toString();
+                    }else narr ="";
+                    narr.trim();
                 }*/
-                QueryById.put(qId, queryText);
+                QueryById.put(qId, queryText + "@" + e /*+ " " + narr*/);
             }
         } catch (IOException e) {
             e.getStackTrace();
@@ -293,11 +326,11 @@ public class Searcher {
      * @param queryWords .
      * @return list of similar words which the API found as relevant
      */
-    private List<String> semanticTreatment(List<String> queryWords) {
+    private String semanticTreatment(HashSet<String> queryWords) {
         if (queryWords.isEmpty()) {
             return null;
         }
-        List<String> similarWord = new ArrayList<>();
+        StringBuilder similarWord = new StringBuilder();
         StringBuilder query = new StringBuilder();
         for (String s : queryWords) {
             query.append(s + "+");
@@ -321,7 +354,7 @@ public class Searcher {
             if (stringBuilder.length() > 10) {
                 for (int i = 0; i < numOfWordToImport; i++) {
                     word = stringBuilder.substring(stringBuilder.toString().indexOf("\"word\":\"") + 8, stringBuilder.toString().indexOf("\",\""));
-                    similarWord.add(word);
+                    similarWord.append(word + " ");
                     stringBuilder.delete(0, stringBuilder.indexOf("},{\"word\":") + 3);
                 }
                 stringBuilder.delete(0, stringBuilder.length());
@@ -330,7 +363,7 @@ public class Searcher {
         } catch (IOException e1) {
             e1.printStackTrace();
         }
-        return similarWord;
+        return similarWord.toString();
     }
 
     /**
