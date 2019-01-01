@@ -29,25 +29,19 @@ public class Ranker {
                 hash_scores.put(d.getKey(), 0.0); // because Count(w,d)==0
             }
             else {
-                //bm25 = BM25(docsAndTerms.get(d.getKey()), d.getValue()/*,restTerms*/);
-
                 // BM25 calculationx
                 final double k1 = 1.2; final double b = 0.75; // bm25 constants
-                double score, bm25=0.0, important=0.0, notImportant=0.0, sumImportant, tmp;
+                double score, bm25=0.0, numOfWords=0.0, tmp;
                 for(Map.Entry<String, TermData> w : docsAndTerms.get(d.getKey()).entrySet()) {
                     double wTf = w.getValue().gettF();
                     double idf = dictionary.get(w.getKey()).getIdf();
                     tmp =  (k1+1) * wTf * idf;
                     tmp /= wTf + k1 * ( (1 - b) + b * ( (double)d.getValue().getLength() / avgdl));
                     bm25 += tmp;
-                    important++;
-/*                    if (w.getValue().getImportant()) important++;
-                    else notImportant++;*/
+                    numOfWords++;
                 }
 
-                sumImportant = important /*+ notImportant*/;
-
-                score = 0.7*bm25 + 0.3*sumImportant;
+                score = 0.3*bm25 + 0.7*numOfWords;
                 hash_scores.put(d.getKey(), score);
             }
         }

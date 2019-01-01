@@ -461,7 +461,7 @@ public class MainWindowController implements Initializable
 
         // get the ranked documents
         if (searcher == null) {
-            try { ranker = new Ranker(loadedDictionary, restoreDocuments(), postings_path); }
+            try { ranker = new Ranker(loadedDictionary, restoreDocuments()); }
             catch (IOException e) { e.printStackTrace(); }
         }
         File whichDictionary = new File(postings_path+"\\dictionary_stemmer.txt");
