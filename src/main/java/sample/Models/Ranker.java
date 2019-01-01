@@ -70,39 +70,4 @@ public class Ranker {
         }
         return sorted;
     }
-
-    /*private double getDocWeight(String id) {
-        ArrayList<String> term_tf_arr = new ArrayList<>(150);
-        Document document = documents.get(id);
-        String currTerm;
-        int max_tf = document.getMax_tf(), tf;
-        double totalWeight = 0.0, idf=0.0, docWeight;
-
-        try {
-            BufferedReader br = new BufferedReader(new FileReader(docsTermTfPath + id + ".txt"));
-            String line;
-            while ((line = br.readLine()) != null) {
-                term_tf_arr.add(line);
-            }
-
-            for (String term_tf : term_tf_arr) {
-                currTerm = term_tf.substring(0, term_tf.lastIndexOf('_'));
-                tf = Integer.parseInt(term_tf.substring(term_tf.lastIndexOf('_')+1));
-                if (dictionary.containsKey(currTerm)) {
-                    idf = dictionary.get(currTerm).getIdf();
-                }
-                else if (dictionary.containsKey(currTerm.toUpperCase())) {
-                    idf = dictionary.get(currTerm.toUpperCase()).getIdf();
-                }
-                else if (dictionary.containsKey(currTerm.toLowerCase())) {
-                    idf = dictionary.get(currTerm.toLowerCase()).getIdf();
-                }
-                docWeight = ((double)tf / (double)max_tf) * idf;
-                totalWeight += Math.pow(docWeight, 2);
-            }
-        }
-        catch (IOException e) { e.printStackTrace(); }
-
-        return totalWeight;
-    }*/
 }

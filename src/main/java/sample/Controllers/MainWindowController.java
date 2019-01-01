@@ -518,9 +518,13 @@ public class MainWindowController implements Initializable
         window.show();
     }
 
+    /**
+     * add a new column to the table that contains a button foreach row.
+     * the button will open a new stage containing the top 5 most frequent entities in the document.
+     * @param table .
+     */
     private void addButtonToTable(TableView<Document> table ) {
         @SuppressWarnings("unchecked") TableColumn<Document, Void> colBtn = new TableColumn("Entities");
-
         Callback<TableColumn<Document, Void>, TableCell<Document, Void>> cellFactory = new Callback<TableColumn<Document, Void>, TableCell<Document, Void>>() {
             @Override
             public TableCell<Document, Void> call(final TableColumn<Document, Void> param) {
@@ -530,7 +534,7 @@ public class MainWindowController implements Initializable
                     {
                         btn.setOnAction((ActionEvent event) -> {
                             Document doc = getTableView().getItems().get(getIndex());
-                            List<String> entities = strongestEntities(doc.getEntities(),loadedDictionary);
+                            List<String> entities = strongestEntities(doc.getEntities());
                             Stage window = new Stage();
                             window.setTitle("The Entities of " + doc.getDoc_id());
                             Label entity = new Label();
@@ -565,21 +569,23 @@ public class MainWindowController implements Initializable
                 return cell;
             }
         };
-
         colBtn.setCellFactory(cellFactory);
-
         table.getColumns().add(colBtn);
-
     }
 
-    private List<String> strongestEntities(String entities, TreeMap<String,DictionaryRecord> dictionary) {
+    /**
+     * return the top 5 most frequent entities in the document (if exist)
+     * @param entities .
+     * @return .
+     */
+    private List<String> strongestEntities(String entities) {
         List<String> list = new ArrayList<>();
         if (entities.isEmpty())
             return list;
         String[] entitiesArr = entities.split("@");
         for (String s : entitiesArr) {
-            if (dictionary.containsKey(s.substring(0, s.indexOf("_")))) {
-                int df = dictionary.get(s.substring(0, s.indexOf("_"))).getDF();
+            if (loadedDictionary.containsKey(s.substring(0, s.indexOf("_")))) {
+                int df = loadedDictionary.get(s.substring(0, s.indexOf("_"))).getDF();
                 int newTf = Integer.parseInt(s.substring(s.indexOf("_") + 1));
                 double rank = (double) (newTf) / (double) (df);
                 rank = round(rank, 3);
@@ -587,20 +593,23 @@ public class MainWindowController implements Initializable
             }
         }
 
-        list.sort(new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                double oo1 = Double.parseDouble(o1.substring(o1.indexOf("Score:") + 7));
-                double oo2 = Double.parseDouble(o2.substring(o2.indexOf("Score:") + 7));
-                if (oo1 < oo2) return 1;
-                else if (oo1 > oo2) return -1;
-                else
-                    return o1.substring(o1.indexOf("Entity: ") + 8, o1.indexOf(" ,Score:")).compareTo(o2.substring(o2.indexOf("Entity: ") + 8, o2.indexOf(" ,Score:")));
-            }
+        list.sort((o1, o2) -> {
+            double oo1 = Double.parseDouble(o1.substring(o1.indexOf("Score:") + 7));
+            double oo2 = Double.parseDouble(o2.substring(o2.indexOf("Score:") + 7));
+            if (oo1 < oo2) return 1;
+            else if (oo1 > oo2) return -1;
+            else
+                return o1.substring(o1.indexOf("Entity: ") + 8, o1.indexOf(" ,Score:")).compareTo(o2.substring(o2.indexOf("Entity: ") + 8, o2.indexOf(" ,Score:")));
         });
         return list;
     }
 
+    /**
+     * rounds the value to upper bound with 2 digits after the decimal point
+     * @param value
+     * @param places
+     * @return
+     */
     private double round(double value, @SuppressWarnings("SameParameterValue") int places) {
         if (places < 0) throw new IllegalArgumentException();
 
@@ -609,7 +618,6 @@ public class MainWindowController implements Initializable
         long tmp = Math.round(value);
         return (double) tmp / factor;
     }
-
 
     /**
      * run the query from the file in the path the user had entered.
