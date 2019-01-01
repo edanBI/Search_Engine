@@ -29,7 +29,7 @@ public class Ranker {
                 hash_scores.put(d.getKey(), 0.0); // because Count(w,d)==0
             }
             else {
-                // BM25 calculationx
+                // BM25 calculation
                 final double k1 = 1.2; final double b = 0.75; // bm25 constants
                 double score, bm25=0.0, numOfWords=0.0, tmp;
                 for(Map.Entry<String, TermData> w : docsAndTerms.get(d.getKey()).entrySet()) {

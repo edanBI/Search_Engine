@@ -196,7 +196,8 @@ public class ReadFile {
             if (!progData.exists()) progData.mkdirs();
             BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
                     new FileOutputStream(progData + "/Languages.txt"), StandardCharsets.UTF_8));
-            for (String s : allDocsLanguage) {
+            HashSet<String> hsLanguages = new HashSet<>(allDocsLanguage);
+            for (String s : hsLanguages) {
                 bw.write(s);
                 bw.newLine();
             }

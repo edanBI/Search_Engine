@@ -72,28 +72,6 @@ public class Document {
         return this.entities;
     }
 
-    /*void setEntities(List<String> list) {
-        StringBuilder stringBuilder = new StringBuilder();
-        list.sort(new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                int oo1 = Integer.parseInt(o1.substring(o1.indexOf("_") + 1));
-                int oo2 = Integer.parseInt(o2.substring(o2.indexOf("_") + 1));
-                if (oo1 < oo2) return 1;
-                else if (oo1 > oo2) return -1;
-                else
-                    return o1.substring(0, o1.indexOf("_")).compareTo(o2.substring(0, o2.indexOf("_")));
-            }
-        });
-        for (String s : list
-        ) {
-            stringBuilder.append(s.substring(0, s.indexOf("_")) + "@");
-        }
-        if (stringBuilder != null && !stringBuilder.toString().isEmpty())
-            stringBuilder.deleteCharAt(stringBuilder.length() - 1);
-        this.entities = stringBuilder.toString();
-    }*/
-
     public void setEntities(String arg) {
         entities = arg;
     }

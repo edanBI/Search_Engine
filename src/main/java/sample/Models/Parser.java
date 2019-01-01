@@ -1,9 +1,6 @@
 package sample.Models;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.util.*;
 
 public class Parser {
@@ -26,7 +23,8 @@ public class Parser {
     private void stopWordsFromFile(String path) {
         try {
             File file = new File(path);
-            BufferedReader br = new BufferedReader(new FileReader(file));
+            BufferedReader br = new BufferedReader(new InputStreamReader(
+                    new FileInputStream(file), "UTF-8"));
             String st;
             while ((st = br.readLine()) != null)
                 this.stopWords.add(st.trim());

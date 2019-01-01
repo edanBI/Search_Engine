@@ -20,10 +20,7 @@ import org.apache.commons.io.FileUtils;
 import org.controlsfx.control.CheckListView;
 import sample.Models.*;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.util.*;
 
@@ -78,7 +75,9 @@ public class MainWindowController implements Initializable
 
     private ArrayList<String> restoreLanguages() throws IOException {
         ArrayList<String> language = new ArrayList<>();
-        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Languages.txt"));
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(
+                        new FileInputStream(postings_path + "/ProgramData/Languages.txt"), "UTF-8"));
         String line;
         while ((line = br.readLine()) != null) {
             if (!line.isEmpty())
@@ -91,7 +90,9 @@ public class MainWindowController implements Initializable
 
     private HashMap<String, Document> restoreDocuments() throws IOException {
         HashMap<String, Document> docSet = new HashMap<>();
-        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Documents.txt"));
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(
+                        new FileInputStream(postings_path + "/ProgramData/Documents.txt"), "UTF-8"));
         String line, docId;
         int max_tf, unique_words, length;
         while ((line = br.readLine()) != null) {
@@ -109,7 +110,9 @@ public class MainWindowController implements Initializable
 
     private void restoreCities() throws IOException {
         loadedCities = new HashMap<>();
-        BufferedReader br = new BufferedReader(new FileReader(postings_path + "/ProgramData/Cities.txt"));
+        BufferedReader br = new BufferedReader(
+                new InputStreamReader(
+                        new FileInputStream(postings_path + "/ProgramData/Cities.txt"), "UTF-8"));
         String line, city, country, currency, population, docs[];
         LinkedList<String> list;
 
@@ -144,6 +147,8 @@ public class MainWindowController implements Initializable
     public ImageView imageView_logo;
     public MenuButton m_languages;
     public Label lbl_resPath;
+    public Label lbl_status;
+    public Label lbl_city;
 
     /**
      * this method generates the dictionary and posting files.
@@ -154,11 +159,7 @@ public class MainWindowController implements Initializable
             return;
         }
 
-        DialogPane dialogPane = new DialogPane();
-        dialogPane.setContentText("Parsing and Indexing...");
-        Stage sAlert = new Stage();
-        sAlert.setScene(new Scene(dialogPane));
-        sAlert.show();
+        lbl_status.setText("Parsing and Indexing...");
 
         Task<Void> tGenerate = new Task<Void>() {
             @Override
@@ -201,13 +202,13 @@ public class MainWindowController implements Initializable
                 catch (IOException e) { e.printStackTrace(); }
                 endTime = System.currentTimeMillis();
 
+                System.out.println("Done!");
                 return null;
             }
         };
 
         tGenerate.setOnSucceeded(event -> {
-            //alert.close();
-            sAlert.close();
+            lbl_status.setText("");
             displaySummary();
         });
 
@@ -222,8 +223,6 @@ public class MainWindowController implements Initializable
      */
     public void openDirectoryFileExplorer(ActionEvent actionEvent) {
         DirectoryChooser dc = new DirectoryChooser();
-        //dc.setInitialDirectory(new File("D:\\documents\\users\\benivre\\Downloads"));
-        //dc.setInitialDirectory(new File("C:\\Users\\user\\Desktop\\Engine misc"));
 
         File selectedDir = dc.showDialog(vBox_mainWindows.getScene().getWindow());
         if (actionEvent.getSource().equals(btn_corpus_browse) && selectedDir!=null)
@@ -294,8 +293,6 @@ public class MainWindowController implements Initializable
         try {
             Stage d_window = new Stage();
             d_window.setTitle("Dictionary");
-            String dic_path =
-                    this.toStem ? postings_path + "\\dictionary_stemmer.txt" : postings_path + "\\dictionary.txt";
 
             Collection<DictionaryRecord> list;
             if (indexer != null)
@@ -339,17 +336,36 @@ public class MainWindowController implements Initializable
      * loads the dictionary form the directory which its path is in the posting files text box
      */
     public void loadDictionary() {
-        try {
-            String str = txt_postings_path.getText();
-            loadedDictionary = Indexer.readDictionaryFromFile(str);
-            postings_path = lbl_posting_path;
+        if (txt_postings_path.getText().isEmpty()) {
+            new Alert(Alert.AlertType.ERROR, "No posting path").showAndWait();
+            return;
+        }
+        lbl_status.setText("loading dictionary...");
+        Task<Void> task = new Task<Void>() {
+            @Override
+            protected Void call() throws Exception {
+                try {
+                    String str = txt_postings_path.getText();
+                    loadedDictionary = Indexer.readDictionaryFromFile(str);
+                    postings_path = lbl_posting_path;
+
+                } catch (IOException e) {
+                    Alert alert = new Alert(Alert.AlertType.ERROR, "Missing Posting Path");
+                    java.awt.Toolkit.getDefaultToolkit().beep();
+                    alert.showAndWait();
+                }
+                return null;
+            }
+        };
+        task.setOnSucceeded(event -> {
             Alert alert = new Alert(Alert.AlertType.INFORMATION, "Dictionary Loaded");
             alert.show();
-        } catch (IOException e) {
-            Alert alert = new Alert(Alert.AlertType.ERROR, "Missing Posting Path");
-            java.awt.Toolkit.getDefaultToolkit().beep();
-            alert.showAndWait();
-        }
+            lbl_status.setText("");
+            addLanguages();
+        });
+        Thread t = new Thread(task);
+        t.setDaemon(true);
+        t.start();
     }
 
     /**
@@ -357,7 +373,7 @@ public class MainWindowController implements Initializable
      * the languages values are read from a file in the program directory in the postings file directory
      */
     public void addLanguages() {
-        File language = new File(postings_path + "/ProgramData/Documents.txt");
+        File language = new File(postings_path + "/ProgramData/Languages.txt");
         if (readFile == null && !language.exists())
             return;
         m_languages.maxHeight(100.0);
@@ -422,6 +438,8 @@ public class MainWindowController implements Initializable
                 for (String city : selected)
                     hs_citiesSelected.add(loadedCities.get(city));
             }
+
+            lbl_city.setText(selected.toString().substring(1, selected.toString().length()-1));
         });
 
         ScrollPane scrollPane = new ScrollPane(checkListView);
@@ -459,6 +477,7 @@ public class MainWindowController implements Initializable
             return;
         }
 
+        lbl_status.setText("searching...");
         // get the ranked documents
         if (searcher == null) {
             try { ranker = new Ranker(loadedDictionary, restoreDocuments()); }
@@ -479,6 +498,7 @@ public class MainWindowController implements Initializable
         if (txt_queryEntry.getText().length() > 0) {
             if (hs_citiesSelected==null) hs_citiesSelected=new HashSet<>();
             retrievedDocumentsList = FXCollections.observableArrayList(searcher.relevantDocsFromQuery(txt_queryEntry.getText(), hs_citiesSelected, toSemantic));
+            lbl_status.setText("");
         } else {
             Task<Void> task = new Task<Void>() {
                 @Override
@@ -487,10 +507,8 @@ public class MainWindowController implements Initializable
                     return null;
                 }
             };
-            Alert alert = new Alert(Alert.AlertType.INFORMATION, "Searching...");
-            alert.show();
             task.setOnSucceeded(event -> {
-                alert.close();
+                lbl_status.setText("");
                 new Alert(Alert.AlertType.INFORMATION, "IR  completed. Queries result stored in file!").showAndWait();
             });
             Thread thread = new Thread(task);

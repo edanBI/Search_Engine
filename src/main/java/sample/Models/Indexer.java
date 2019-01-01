@@ -49,9 +49,6 @@ public class Indexer {
         numDocsCached++;
         numDocsIndexed++;
 
-        /*int idx = 0;
-        String[] term_tf_arr = new String[d_args.size()];*/
-
         // update documents set
         if (docsSet.containsKey(docId)) {
             CityDocument tmp = (CityDocument) docsSet.get(docId);
@@ -146,6 +143,7 @@ public class Indexer {
     {
         File dir = new File(tmpPostPath);
         if (!dir.exists())
+            //noinspection ResultOfMethodCallIgnored
             dir.mkdirs();
         File file = new File(tmpPostPath + "/posting" + fileCounter + ".txt");
         try {
@@ -224,7 +222,6 @@ public class Indexer {
             if (filesList.size()==1) createPostings(tmpPostPath + "/" + filesList.remove(0), null, stem); //CREATE THE POSTING FILES
             else createPostings(tmpPostPath + "/" + filesList.remove(0), tmpPostPath + "/" + filesList.remove(0), stem); //CREATE THE POSTING FILES
         }
-        catch (NullPointerException ptr) { ptr.toString(); }
         catch (Exception e) { e.printStackTrace(); }
     }
 
@@ -238,8 +235,10 @@ public class Indexer {
     {
         File f1 = new File(tmpPostPath + "/" + file1);
         File f2 = new File(tmpPostPath + "/" + file2);
-        BufferedReader br1 = new BufferedReader(new FileReader(f1), cachedDocsLimit*29);
-        BufferedReader br2 = new BufferedReader(new FileReader(f2), cachedDocsLimit*29);
+        BufferedReader br1 = new BufferedReader(new InputStreamReader(
+                new FileInputStream(f1), "UTF-8"), cachedDocsLimit*29);
+        BufferedReader br2 = new BufferedReader(new InputStreamReader(
+                new FileInputStream(f2), "UTF-8"), cachedDocsLimit*29);
         BufferedWriter bw = new BufferedWriter(
                 new OutputStreamWriter(new
                         FileOutputStream(tmpPostPath + "/posting" + fileCounter + ".txt"), StandardCharsets.UTF_8),
@@ -262,24 +261,6 @@ public class Indexer {
                 }
                 else if (term1.compareToIgnoreCase(term2) == 0) //term1 == term2
                 {
-                    /*if ( idCompare(
-                            line1.substring(line1.indexOf("=")+1, line1.indexOf(", tf=")),
-                            line2.substring(line2.indexOf("=")+1, line2.indexOf(", tf="))) < 0)
-                    {
-                        bw.write(line1);
-                        bw.newLine();
-                        line1 = br1.readLine();
-                        if (line1!=null)
-                            term1 = line1.substring(0, line1.indexOf(" | "));
-                    }
-                    else {
-                        bw.write(line2);
-                        bw.newLine();
-                        line2 = br2.readLine();
-                        if (line2!=null)
-                            term2 = line2.substring(0, line2.indexOf(" | "));
-                    }*/
-
                     bw.write(line1);
                     bw.newLine();
                     line1 = br1.readLine();
@@ -343,7 +324,8 @@ public class Indexer {
         if (!postingDir.exists()) postingDir.mkdirs();
         BufferedReader brLeft = new BufferedReader(new FileReader(left));
         BufferedReader brRight = null;
-        if (right!=null) brRight = new BufferedReader(new FileReader(right));
+        if (right!=null) brRight = new BufferedReader(new InputStreamReader(
+                new FileInputStream(right), "UTF-8"));
 
         BufferedWriter bw_$9 = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/$-9.txt"), StandardCharsets.UTF_8), 30000);
         BufferedWriter bw_AB = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(postingDir_path + "/A-B.txt"), StandardCharsets.UTF_8), 30000);
@@ -393,80 +375,77 @@ public class Indexer {
             curr_term = curr_line.substring(0, curr_line.indexOf(" | "));
             first = curr_line.charAt(0);
 
-            if (first < 65 || (first > 90 && first < 97) || first > 122) {
-                /*if (dictionary.get(curr_line)==null)
-                    System.out.println(curr_line);*/
+            if (!Character.isLetter(first)) {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(i$9);
                 i$9++;
                 bw_$9.write(curr_line);
                 bw_$9.newLine();
-            } else if (first < 67 || (first > 96 && first < 99)) {
+            } else if (Character.toLowerCase(first)=='a' || Character.toLowerCase(first)=='b') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iAB);
                 iAB++;
                 bw_AB.write(curr_line);
                 bw_AB.newLine();
-            } else if (first < 69 || (first > 98 && first < 101)) {
+            } else if (Character.toLowerCase(first)=='c' || Character.toLowerCase(first)=='d') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iCD);
                 iCD++;
                 bw_CD.write(curr_line);
                 bw_CD.newLine();
-            } else if (first < 71 || (first > 100 && first < 103)) {
+            } else if (Character.toLowerCase(first)=='e' || Character.toLowerCase(first)=='f') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iEF);
                 iEF++;
                 bw_EF.write(curr_line);
                 bw_EF.newLine();
-            } else if (first < 73 || (first > 102 && first < 105)) {
+            } else if (Character.toLowerCase(first)=='g' || Character.toLowerCase(first)=='h') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iGH);
                 iGH++;
                 bw_GH.write(curr_line);
                 bw_GH.newLine();
-            } else if (first < 75 || (first > 104 && first < 107)) {
+            } else if (Character.toLowerCase(first)=='i' || Character.toLowerCase(first)=='j') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iIJ);
                 iIJ++;
                 bw_IJ.write(curr_line);
                 bw_IJ.newLine();
-            } else if (first < 77 || (first > 106 && first < 109)) {
+            } else if (Character.toLowerCase(first)=='k' || Character.toLowerCase(first)=='l') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iKL);
                 iKL++;
                 bw_KL.write(curr_line);
                 bw_KL.newLine();
-            } else if (first < 79 || (first > 108 && first < 111)) {
+            } else if (Character.toLowerCase(first)=='m' || Character.toLowerCase(first)=='n') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iMN);
                 iMN++;
                 bw_MN.write(curr_line);
                 bw_MN.newLine();
-            } else if (first < 81 || (first > 110 && first < 113)) {
+            } else if (Character.toLowerCase(first)=='o' || Character.toLowerCase(first)=='p') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iOP);
                 iOP++;
                 bw_OP.write(curr_line);
                 bw_OP.newLine();
-            } else if (first < 83 || (first > 112 && first < 115)) {
+            } else if (Character.toLowerCase(first)=='q' || Character.toLowerCase(first)=='r') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iQR);
                 iQR++;
                 bw_QR.write(curr_line);
                 bw_QR.newLine();
-            } else if (first < 85 || (first > 114 && first < 117)) {
+            } else if (Character.toLowerCase(first)=='s' || Character.toLowerCase(first)=='t') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iST);
                 iST++;
                 bw_ST.write(curr_line);
                 bw_ST.newLine();
-            } else if (first < 87 || (first > 116 && first < 119)) {
+            } else if (Character.toLowerCase(first)=='u' || Character.toLowerCase(first)=='v') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iUV);
                 iUV++;
                 bw_UV.write(curr_line);
                 bw_UV.newLine();
-            } else if (first < 89 || first < 121) {
+            } else if (Character.toLowerCase(first)=='w' || Character.toLowerCase(first)=='x') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iWX);
                 iWX++;
                 bw_WX.write(curr_line);
                 bw_WX.newLine();
-            } else {
+            } else if (Character.toLowerCase(first)=='y' || Character.toLowerCase(first)=='z') {
                 if (!curr_term.equals(prev_term)) dictionary.get(curr_term).setPtr(iYZ);
                 iYZ++;
                 bw_YZ.write(curr_line);
                 bw_YZ.newLine();
             }
-
             // read new line
             if (leftChosen) leftLine = brLeft.readLine();
             else rightLine = brRight.readLine();
@@ -522,6 +501,7 @@ public class Indexer {
         File dir = new File(tmpPostPath);
         File[] list = dir.listFiles();
         ArrayList<String> ans = new ArrayList<>();
+        assert list != null;
         for (File file : list)
             ans.add(file.getName());
         return ans;
@@ -542,10 +522,9 @@ public class Indexer {
                 .put(docid, new CityDocument(docid, -1, -1, city))));
     }
 
-    /*public TreeMap<String, City> getIdxCities() {
-        return idxCities;
-    }*/
-
+    /**
+     * @return the indexer's terms dictionary
+     */
     public TreeMap<String, DictionaryRecord> getDictionary() {
         return dictionary;
     }
@@ -569,24 +548,6 @@ public class Indexer {
         } catch (IOException e) { e.printStackTrace(); }
     }
 
-    /*private void writeDocumentTermTFToDisk(String docId, String[] arr) {
-        try {
-            File dir = new File(postingDir + "/ProgramData/Documents-Term-TF");
-            if (!dir.exists())
-                //noinspection ResultOfMethodCallIgnored
-                dir.mkdirs();
-            File file = new File(dir.getPath() + "/" + docId + ".txt");
-            BufferedWriter bw = new BufferedWriter(new OutputStreamWriter(
-                    new FileOutputStream(file), StandardCharsets.UTF_8));
-            for (String str : arr) {
-                bw.write(str);
-                bw.newLine();
-            }
-            bw.close();
-
-        } catch (IOException e) {e.printStackTrace();}
-    }*/
-
     /**
      * @param path to the postings directory
      * @return a TreeMap of the dictionary read from the file.
@@ -597,11 +558,7 @@ public class Indexer {
         int len = 0;
         TreeMap<String, DictionaryRecord> dictionary = new TreeMap<>();
         File file = new File(path + "/dictionary.txt");
-        BufferedReader br;
-        if (file.exists())
-            br = new BufferedReader(new FileReader(path + "/dictionary.txt"));
-        else
-            br = new BufferedReader(new FileReader(path + "/dictionary_stemmer.txt"));
+        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF-8"));
         String curr = br.readLine();
         while (curr != null)
         {

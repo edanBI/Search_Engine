@@ -28,9 +28,9 @@ public class Searcher {
         initPostingFiles(postingFiles);
     }
 
-    public void setResPath(String resPath) {
+    /*public void setResPath(String resPath) {
         this.resPath = resPath;
-    }
+    }*/
 
     /**
      * Finds and return the relevant documents for query and write the result to the disk
@@ -286,7 +286,8 @@ public class Searcher {
             else filePath = pathOfPostingFolder + "/Posting Files_stemmer/$-9.txt";
         }else return allHisLines;
 
-        try (BufferedReader br = new BufferedReader(new FileReader(filePath))) {
+        try (BufferedReader br = new BufferedReader(new InputStreamReader(
+                new FileInputStream(filePath), "UTF-8"))) {
             for (int i = 0; i < firstLine; i++)
                 br.readLine();
             for (int i = 0; i < numOfLines; i++)
@@ -347,7 +348,7 @@ public class Searcher {
             URL oracle1 = new URL("https://api.datamuse.com/words?ml=" + query);
             String inputLine;
             BufferedReader in = new BufferedReader(
-                    new InputStreamReader(oracle1.openStream()));
+                    new InputStreamReader(oracle1.openStream(), "UTF-8"));
             while ((inputLine = in.readLine()) != null)
                 stringBuilder.append(inputLine);
             in.close();
@@ -397,43 +398,4 @@ public class Searcher {
         postingFiles.put('Y', "Y-Z.txt");
         postingFiles.put('Z', "Y-Z.txt");
     }
-
-    //TO ADD
-    /*
-    public List<String> strongestEntities(String entities, TreeMap<String,Integer> dictionary) {
-        List<String> list = new ArrayList<>();
-        String[] entitiesArr = entities.split("@");
-        for (String s : entitiesArr) {
-            if (dictionary.containsKey(s.substring(0, s.indexOf("_")))) {
-                int df = dictionary.get(s.substring(0, s.indexOf("_")));
-                int newTf = Integer.parseInt(s.substring(s.indexOf("_") + 1));
-                double rank = (double) (newTf) / (double) (df);
-                rank = round(rank, 3);
-                list.add("Entity: " + s.substring(0, s.indexOf("_")) + " ,Score: " + rank);
-            }
-        }
-
-        list.sort(new Comparator<String>() {
-            @Override
-            public int compare(String o1, String o2) {
-                double oo1 = Double.parseDouble(o1.substring(o1.indexOf("Score:") + 7));
-                double oo2 = Double.parseDouble(o2.substring(o2.indexOf("Score:") + 7));
-                if (oo1 < oo2) return 1;
-                else if (oo1 > oo2) return -1;
-                else
-                    return o1.substring(o1.indexOf("Entity: ") + 8, o1.indexOf(" ,Score:")).compareTo(o2.substring(o2.indexOf("Entity: ") + 8, o2.indexOf(" ,Score:")));
-            }
-        });
-        return list;
-    }
-    //TO ADD
-    public double round(double value, int places) {
-        if (places < 0) throw new IllegalArgumentException();
-
-        long factor = (long) Math.pow(10, places);
-        value = value * factor;
-        long tmp = Math.round(value);
-        return (double) tmp / factor;
-    }*/
-
 }
