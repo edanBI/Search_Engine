@@ -277,10 +277,13 @@ public class MainWindowController implements Initializable
         txt_postings_path.clear();
         corpus_path = null;
         postings_path = null;
+        lbl_posting_path = null;
         chbx_stemming.setSelected(false);
         chbx_stemming.setIndeterminate(false);
         toStem = false;
         m_languages.getItems().clear();
+        loadedDictionary = null;
+        loadedCities = null;
         new Alert(Alert.AlertType.INFORMATION, "Reset Completed").showAndWait();
     }
 
@@ -455,7 +458,7 @@ public class MainWindowController implements Initializable
      * run the query from the text area which the user had typed in.
      */
     public void runQuery() {
-        if (indexer!=null) {
+        if (indexer!=null) { // after generate dictionary and posting
             loadedDictionary = indexer.getDictionary();
         }
 
@@ -662,16 +665,17 @@ public class MainWindowController implements Initializable
         txt_queryPath.clear();
 
         // clear cities
-        //checkListView.getCheckModel().clearChecks();
         checkListView = null;
         hs_citiesSelected = null;
 
-        // clear result path and file
-        File resFile = new File(lbl_resPath.getText());
-        if (resFile.exists())
-            resFile.delete();
         resQueries_path = "";
         lbl_resPath.setText("");
         queryFile = null;
+        lbl_city.setText("");
+        chbx_semantic.setSelected(false);
+        chbx_semantic.setIndeterminate(false);
+        toSemantic = false;
+
+        searcher = null;
     }
 }
