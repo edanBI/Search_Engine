@@ -193,8 +193,8 @@ public class MainWindowController implements Initializable
                     }
                 }
                 indexer.flushTmpPosting(); //clear all the remaining terms which haven't written to disk
-                indexer.mergeTmpPostingFiles(toStem); // build final posting files
-                indexer.writeDictionaryToDisk(toStem); // store all the dictionary in disk
+                indexer.mergeTmpPostingFiles(); // build final posting files
+                indexer.writeDictionaryToDisk(); // store all the dictionary in disk
                 indexer.writeDocumentsToDisk(); // store the documents in disk
                 readFile.writeCitiesToDisk(postings_path); // store the cities in disk
                 readFile.writeLanguagesToDisk(postings_path); // store the languages in disk
@@ -445,7 +445,7 @@ public class MainWindowController implements Initializable
         ScrollPane scrollPane = new ScrollPane(checkListView);
         Scene layout = new Scene(scrollPane);
         window.setScene(layout);
-        window.show();
+        window.showAndWait();
     }
 
     /**
@@ -483,8 +483,9 @@ public class MainWindowController implements Initializable
             try { ranker = new Ranker(loadedDictionary, restoreDocuments()); }
             catch (IOException e) { e.printStackTrace(); }
         }
-        File whichDictionary = new File(postings_path+"\\dictionary_stemmer.txt");
-        boolean stem = whichDictionary.exists();
+        boolean stem = false;
+        if (postings_path.contains("Posting With Stemmer"))
+            stem = true;
 
         if (resQueries_path == null || resQueries_path.length() == 0) {
             lbl_resPath.setText(postings_path + "\\results.txt");
@@ -650,7 +651,12 @@ public class MainWindowController implements Initializable
         if (queryFile !=null) {
             txt_queryPath.setText(queryFile.getAbsolutePath());
         }
-        // run the searcher on the query file
-        //searcher.relevantDocsFromQueryFile(queryFile, hs_citiesSelected, toSemantic);
+    }
+
+    public void clearQueryPath() {
+        txt_queryEntry.clear();
+        txt_queryPath.clear();
+        resQueries_path = "";
+        queryFile = null;
     }
 }

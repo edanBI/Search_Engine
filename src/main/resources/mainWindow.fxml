@@ -64,14 +64,14 @@
         </AnchorPane>
     </VBox>
     <AnchorPane prefHeight="313.0" prefWidth="761.0">
-        <Button fx:id="btn_run" layoutX="591.0" layoutY="149.0" mnemonicParsing="false" onAction="#runQuery" prefHeight="31.0" prefWidth="150.0" text="Run Run Run" />
+        <Button fx:id="btn_run" layoutX="596.0" layoutY="185.0" mnemonicParsing="false" onAction="#runQuery" prefHeight="31.0" prefWidth="150.0" text="Run Run Run" />
         <TextArea fx:id="txt_queryEntry" layoutX="14.0" layoutY="13.0" prefHeight="64.0" prefWidth="649.0" promptText="enter your query here..." />
         <TextField fx:id="txt_queryPath" disable="false" layoutX="14.0" layoutY="85.0" prefHeight="31.0" prefWidth="649.0" promptText="browse queries file path" />
         <Button fx:id="btn_browseQuery" layoutX="671.0" layoutY="85.0" mnemonicParsing="false" onAction="#browseQueryFile" prefHeight="31.0" prefWidth="79.0" text="Browse" />
         <Button fx:id="btn_cities" layoutX="14.0" layoutY="152.0" mnemonicParsing="false" onMouseClicked="#displayCities" prefHeight="25.0" prefWidth="161.0" text="Choose Cities" />
-        <CheckBox fx:id="chbx_semantic" layoutX="243.0" layoutY="152.0" mnemonicParsing="false" onAction="#setToSemantic" prefHeight="31.0" prefWidth="96.0" text="Semantic" />
-        <Button fx:id="btn_resPath" layoutX="380.0" layoutY="149.0" mnemonicParsing="false" onAction="#openDirectoryFileExplorer" prefHeight="31.0" prefWidth="142.0" text="Set Result File Directory" />
-        <Label fx:id="lbl_resPath" layoutX="169.0" layoutY="222.0" prefHeight="25.0" prefWidth="563.0" />
+        <CheckBox fx:id="chbx_semantic" layoutX="195.0" layoutY="149.0" mnemonicParsing="false" onAction="#setToSemantic" prefHeight="31.0" prefWidth="96.0" text="Semantic" />
+        <Button fx:id="btn_resPath" layoutX="596.0" layoutY="149.0" mnemonicParsing="false" onAction="#openDirectoryFileExplorer" prefHeight="31.0" prefWidth="150.0" text="Set Result File Directory" />
+        <Label fx:id="lbl_resPath" layoutX="15.0" layoutY="231.0" prefHeight="25.0" prefWidth="723.0" />
         <Label layoutX="182.0" layoutY="265.0" prefHeight="33.0" prefWidth="61.0" text="Status:" textFill="RED">
         <font>
             <Font size="18.0" />
@@ -82,6 +82,7 @@
             <Font name="System Bold" size="18.0" />
         </font>
         </Label>
-      <Label fx:id="lbl_city" layoutX="13.0" layoutY="184.0" prefHeight="83.0" prefWidth="740.0" />
+      <Label fx:id="lbl_city" layoutX="13.0" layoutY="184.0" prefHeight="44.0" prefWidth="563.0" />
+      <Button layoutX="596.0" layoutY="269.0" mnemonicParsing="false" onAction="#clearQueryPath" prefHeight="25.0" prefWidth="150.0" text="Clear Path" />
     </AnchorPane>
 </VBox>

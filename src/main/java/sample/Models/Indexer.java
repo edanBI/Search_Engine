@@ -170,17 +170,12 @@ public class Indexer {
     /**
      * writes the entire dictionary into the disk.
      */
-    public void writeDictionaryToDisk(boolean stem)
+    public void writeDictionaryToDisk()
     {
         numUniqueTerms = dictionary.size();
         updateIDFs();
         try {
-            File dictionary_file;
-            if (stem)
-                dictionary_file = new File(postingDir + "/dictionary_stemmer.txt");
-            else
-                dictionary_file = new File(postingDir + "/dictionary.txt");
-            //BufferedWriter br = new BufferedWriter(new FileWriter(dictionary_file));
+            File dictionary_file = new File(postingDir + "/dictionary.txt");
             BufferedWriter br = new BufferedWriter(new OutputStreamWriter(new FileOutputStream(dictionary_file), StandardCharsets.UTF_8));
             dictionary.forEach((term, record) -> {
                 try {
@@ -200,7 +195,7 @@ public class Indexer {
     /**
      * this is a wrapper for the merge sorting method.
      */
-    public void mergeTmpPostingFiles(boolean stem)
+    public void mergeTmpPostingFiles()
     {
         ArrayList<String> filesList = new ArrayList<>(getFiles());
         filesList.sort(new Comparator<String>() {
@@ -219,8 +214,8 @@ public class Indexer {
                 filesList.add(filesList.size(), "posting"+fileCounter+".txt");
                 fileCounter++;
             }
-            if (filesList.size()==1) createPostings(tmpPostPath + "/" + filesList.remove(0), null, stem); //CREATE THE POSTING FILES
-            else createPostings(tmpPostPath + "/" + filesList.remove(0), tmpPostPath + "/" + filesList.remove(0), stem); //CREATE THE POSTING FILES
+            if (filesList.size()==1) createPostings(tmpPostPath + "/" + filesList.remove(0), null); //CREATE THE POSTING FILES
+            else createPostings(tmpPostPath + "/" + filesList.remove(0), tmpPostPath + "/" + filesList.remove(0)); //CREATE THE POSTING FILES
         }
         catch (Exception e) { e.printStackTrace(); }
     }
@@ -305,22 +300,16 @@ public class Indexer {
      * each pair of letters has his own posting file.
      * @param left is the first file path.
      * @param right is the second file path.
-     * @param stem is true if stemmer check box is selected.
      * @throws IOException in the event of an IO exception thrown, if unable to read or write.
      */
-    private void createPostings(String left, String right, boolean stem) throws IOException, NullPointerException //
+    private void createPostings(String left, String right) throws IOException, NullPointerException //
     {
         String postingDir_path;
         File postingDir;
         // create the directory
-        if (stem) {
-            postingDir_path = this.postingDir + "/Posting Files_stemmer";
-            postingDir = new File(postingDir_path);
-        }
-        else {
-            postingDir_path = this.postingDir + "/Posting Files";
-            postingDir = new File(postingDir_path);
-        }
+
+        postingDir_path = this.postingDir + "/Posting Files";
+        postingDir = new File(postingDir_path);
         if (!postingDir.exists()) postingDir.mkdirs();
         BufferedReader brLeft = new BufferedReader(new FileReader(left));
         BufferedReader brRight = null;
