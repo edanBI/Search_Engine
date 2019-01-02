@@ -40,6 +40,8 @@ public class MainWindowController implements Initializable
 
     private File queryFile;
 
+    private CheckListView<String> checkListView;
+
     public MainWindowController() {
         toStem = false; toSemantic = false;
 
@@ -425,8 +427,9 @@ public class MainWindowController implements Initializable
         list.addAll(loadedCities.keySet());
         list = list.sorted();
 
-        Stage window = new Stage();
-        CheckListView<String> checkListView = new CheckListView<>(list);
+        if (checkListView == null)
+            checkListView = new CheckListView<>(list);
+
         checkListView.getCheckModel().getCheckedItems().addListener((ListChangeListener<String>) c -> {
             hs_citiesSelected = new HashSet<>();
             ObservableList<String> selected = checkListView.getCheckModel().getCheckedItems();
@@ -438,10 +441,10 @@ public class MainWindowController implements Initializable
                 for (String city : selected)
                     hs_citiesSelected.add(loadedCities.get(city));
             }
-
             lbl_city.setText(selected.toString().substring(1, selected.toString().length()-1));
         });
 
+        Stage window = new Stage();
         ScrollPane scrollPane = new ScrollPane(checkListView);
         Scene layout = new Scene(scrollPane);
         window.setScene(layout);
@@ -654,9 +657,21 @@ public class MainWindowController implements Initializable
     }
 
     public void clearQueryPath() {
+        // clear text area/field
         txt_queryEntry.clear();
         txt_queryPath.clear();
+
+        // clear cities
+        //checkListView.getCheckModel().clearChecks();
+        checkListView = null;
+        hs_citiesSelected = null;
+
+        // clear result path and file
+        File resFile = new File(lbl_resPath.getText());
+        if (resFile.exists())
+            resFile.delete();
         resQueries_path = "";
+        lbl_resPath.setText("");
         queryFile = null;
     }
 }

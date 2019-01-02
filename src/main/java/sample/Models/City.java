@@ -68,7 +68,7 @@ public class City {
         this.docsRepresent.addLast(id);
     }
 
-    String getCity() {
+    public String getCity() {
         return city;
     }
 
@@ -173,4 +173,6 @@ public class City {
                 ", docsRepresent=" + docsRepresent.toString() +
                 '}';
     }
+
+
 }
