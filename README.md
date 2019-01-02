@@ -1,7 +1,9 @@
 # Search_Engine
 written in Java 1.8.
 this search engine is designed to work on a given corpus. 
-to fire the application, double click the SearchEngine_GUI.bat file which can be found at 'out' directory.
+to fire the application, double click the SearchEngine_GUI.bat(!!!) file which can be found at 'out' directory.
+
+*** NOTICE --> DO NOT RUN THE .JAR FILE, ONLY DOUBLE CLICK .BAT FILE ***
 
 Steps to parse and index your corpus:
 1. select the corpus directory. make sure the directory also contains 'stop-words.txt' file.
