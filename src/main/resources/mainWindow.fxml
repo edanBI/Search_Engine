@@ -83,6 +83,6 @@
         </font>
         </Label>
       <Label fx:id="lbl_city" layoutX="13.0" layoutY="184.0" prefHeight="44.0" prefWidth="563.0" />
-      <Button layoutX="596.0" layoutY="269.0" mnemonicParsing="false" onAction="#clearQueryPath" prefHeight="25.0" prefWidth="150.0" text="Clear Path" />
+      <Button layoutX="596.0" layoutY="269.0" mnemonicParsing="false" onAction="#clearQueryPath" prefHeight="25.0" prefWidth="150.0" text="Clear" />
     </AnchorPane>
 </VBox>
