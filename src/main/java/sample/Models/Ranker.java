@@ -39,7 +39,9 @@ public class Ranker {
                     tmp /= wTf + k1 * ( (1 - b) + b * ( (double)d.getValue().getLength() / avgdl));
                     bm25 += tmp;
                     if (restTerms != null && !restTerms.isEmpty() && restTerms.contains(w) && !queryTerms.contains(w))
-                        numOfWords+=0.3;
+                        numOfWords+=0.7;
+                    else if (w.getValue().getImportant())
+                        numOfWords+=1.2;
                     else
                         numOfWords++;
                 }

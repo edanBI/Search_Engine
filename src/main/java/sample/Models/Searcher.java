@@ -78,8 +78,13 @@ public class Searcher {
         HashSet<String> docsByCities = docsByCities(cities);
         // HashMap for all the terms by docs (K- docId, V- term name ,TermData)
         HashMap<String, HashMap<String, TermData>> docsAndTerms = new HashMap<>();
-        String desc = query.substring(query.indexOf("@")+1).toLowerCase();
-        String querynew = query.substring(0,query.indexOf("@")).toLowerCase();
+        String querynew = "";
+        String desc = "";
+        if (query.contains("@")) {
+            desc = query.substring(query.indexOf("@") + 1).toLowerCase();
+            querynew = query.substring(0, query.indexOf("@")).toLowerCase();
+        }else
+            querynew = query;
 
         // return all the Terms of the query, after parse
         HashSet<String> queryTerms = new HashSet<>(parser.Parsing(querynew).keySet());
