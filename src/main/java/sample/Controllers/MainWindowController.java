@@ -427,8 +427,9 @@ public class MainWindowController implements Initializable
         list.addAll(loadedCities.keySet());
         list = list.sorted();
 
-        Stage window = new Stage();
-        checkListView = new CheckListView<>(list);
+        if (checkListView == null)
+            checkListView = new CheckListView<>(list);
+
         checkListView.getCheckModel().getCheckedItems().addListener((ListChangeListener<String>) c -> {
             hs_citiesSelected = new HashSet<>();
             ObservableList<String> selected = checkListView.getCheckModel().getCheckedItems();
@@ -440,10 +441,10 @@ public class MainWindowController implements Initializable
                 for (String city : selected)
                     hs_citiesSelected.add(loadedCities.get(city));
             }
-
             lbl_city.setText(selected.toString().substring(1, selected.toString().length()-1));
         });
 
+        Stage window = new Stage();
         ScrollPane scrollPane = new ScrollPane(checkListView);
         Scene layout = new Scene(scrollPane);
         window.setScene(layout);
@@ -661,8 +662,8 @@ public class MainWindowController implements Initializable
         txt_queryPath.clear();
 
         // clear cities
-        // TODO check this is really working and clears the cities list
-        checkListView.getCheckModel().clearChecks();
+        //checkListView.getCheckModel().clearChecks();
+        checkListView = null;
         hs_citiesSelected = null;
 
         // clear result path and file
