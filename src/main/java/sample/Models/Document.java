@@ -11,7 +11,7 @@ import javafx.stage.Stage;
 
 import java.util.*;
 
-public class Document {
+public class    Document {
     private String doc_id;
     private int max_tf;
     private int unique_words;

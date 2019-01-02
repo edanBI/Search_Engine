@@ -40,6 +40,8 @@ public class MainWindowController implements Initializable
 
     private File queryFile;
 
+    private CheckListView<String> checkListView;
+
     public MainWindowController() {
         toStem = false; toSemantic = false;
 
@@ -426,7 +428,7 @@ public class MainWindowController implements Initializable
         list = list.sorted();
 
         Stage window = new Stage();
-        CheckListView<String> checkListView = new CheckListView<>(list);
+        checkListView = new CheckListView<>(list);
         checkListView.getCheckModel().getCheckedItems().addListener((ListChangeListener<String>) c -> {
             hs_citiesSelected = new HashSet<>();
             ObservableList<String> selected = checkListView.getCheckModel().getCheckedItems();
@@ -654,9 +656,21 @@ public class MainWindowController implements Initializable
     }
 
     public void clearQueryPath() {
+        // clear text area/field
         txt_queryEntry.clear();
         txt_queryPath.clear();
+
+        // clear cities
+        // TODO check this is really working and clears the cities list
+        checkListView.getCheckModel().clearChecks();
+        hs_citiesSelected = null;
+
+        // clear result path and file
+        File resFile = new File(lbl_resPath.getText());
+        if (resFile.exists())
+            resFile.delete();
         resQueries_path = "";
+        lbl_resPath.setText("");
         queryFile = null;
     }
 }
